@@ -1,0 +1,6 @@
+NEO4J_HOST = 'http://localhost:7474'
+NEO4J_PORT = '7474'
+NEO4J_USER = 'neo4j'
+NEO4J_PASSWORD = '123456'
+NEO4J_DATABASE = 'Covid_19_pro'
+
