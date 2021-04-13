@@ -1,10 +1,323 @@
 import os
 import re
-from settings import NEO4J_USER,NEO4J_PASSWORD,NEO4J_HOST
+from settings import NEO4J_USER, NEO4J_PASSWORD, NEO4J_HOST, data_dir, word2vec_dir
 from py2neo import Graph, Node, Relationship
+import ahocorasick
+import jieba
+from gensim.models import KeyedVectors
+import string
+import joblib
+import numpy as np
 
 
-class MedicalGraph:
+class CovidGraph:
     def __init__(self):
         self.graph = Graph(NEO4J_HOST, username=NEO4J_USER, password=NEO4J_PASSWORD)
 
+
+class EntityExtractor:
+    def __init__(self):
+        self.result = {}
+
+        self.disease_path = data_dir + 'disease_vocab.txt'  # 所有疾病词汇
+        self.vocab_path = data_dir + 'vocab.txt'  # 所有词汇
+        self.word2vec_path = word2vec_dir  # 中文预训练词向量
+        self.stopwords_path = data_dir + 'stop_words.utf8'
+
+        self.stopwords = [w.strip() for w in open(self.stopwords_path, 'r', encoding='utf8') if w.strip()]  # 停词
+
+        # 训练模型
+        self.tfidf_path = data_dir + 'tfidf_model.m'
+        self.nb_path = data_dir + 'intent_reg_model.m'
+        self.tfidf_model = joblib.load(self.tfidf_path)
+        self.nb_model = joblib.load(self.nb_path)
+
+        self.disease_entities = [w.strip() for w in open(self.disease_path, encoding='utf8') if w.strip()]
+        self.complication_entities = []
+        self.symptom_entities = []
+        self.alias_entities = []
+
+        self.disease_tree = self.build_actree(list(set(self.disease_entities)))
+
+        self.symptom_qwds = ['什么症状', '哪些症状', '症状有哪些', '症状是什么', '什么表征', '哪些表征', '表征是什么',
+                             '什么现象', '哪些现象', '现象有哪些', '症候', '什么表现', '哪些表现', '表现有哪些',
+                             '什么行为', '哪些行为', '行为有哪些', '什么状况', '哪些状况', '状况有哪些', '现象是什么',
+                             '表现是什么', '行为是什么']  # 询问症状
+        self.cureway_qwds = ['药', '药品', '用药', '胶囊', '口服液', '炎片', '吃什么药', '用什么药', '怎么办',
+                             '买什么药', '怎么治疗', '如何医治', '怎么医治', '怎么治', '怎么医', '如何治',
+                             '医治方式', '疗法', '咋治', '咋办', '咋治', '治疗方法']  # 询问治疗方法
+        self.lasttime_qwds = ['周期', '多久', '多长时间', '多少时间', '几天', '几年', '多少天', '多少小时',
+                              '几个小时', '多少年', '多久能好', '痊愈', '康复']  # 询问治疗周期
+        self.cureprob_qwds = ['多大概率能治好', '多大几率能治好', '治好希望大么', '几率', '几成', '比例',
+                              '可能性', '能治', '可治', '可以治', '可以医', '能治好吗', '可以治好吗', '会好吗',
+                              '能好吗', '治愈吗']  # 询问治愈率
+        self.check_qwds = ['检查什么', '检查项目', '哪些检查', '什么检查', '检查哪些', '项目', '检测什么',
+                           '哪些检测', '检测哪些', '化验什么', '哪些化验', '化验哪些', '哪些体检', '怎么查找',
+                           '如何查找', '怎么检查', '如何检查', '怎么检测', '如何检测']  # 询问检查项目
+        self.belong_qwds = ['属于什么科', '什么科', '科室', '挂什么', '挂哪个', '哪个科', '哪些科']  # 询问科室
+        self.disase_qwds = ['什么病', '啥病', '得了什么', '得了哪种', '怎么回事', '咋回事', '回事',
+                            '什么情况', '什么问题', '什么毛病', '啥毛病', '哪种病']  # 询问疾病
+
+    def build_actree(self, wordlist):
+        """
+        构造actree，加速过滤
+        :param wordlist:
+        :return:
+        """
+        actree = ahocorasick.Automaton()
+        # 向树中添加单词
+        for index, word in enumerate(wordlist):
+            actree.add_word(word, (index, word))
+        actree.make_automaton()
+        return actree
+
+    def editDistanceDP(self, s1, s2):
+        """
+        采用DP方法计算编辑距离
+        :param s1:
+        :param s2:
+        :return:
+        """
+        m = len(s1)
+        n = len(s2)
+        solution = [[0 for j in range(n + 1)] for i in range(m + 1)]
+        for i in range(len(s2) + 1):
+            solution[0][i] = i
+        for i in range(len(s1) + 1):
+            solution[i][0] = i
+
+        for i in range(1, m + 1):
+            for j in range(1, n + 1):
+                if s1[i - 1] == s2[j - 1]:
+                    solution[i][j] = solution[i - 1][j - 1]
+                else:
+                    solution[i][j] = 1 + min(solution[i][j - 1], min(solution[i - 1][j],
+                                                                     solution[i - 1][j - 1]))
+        return solution[m][n]
+
+    def simCal(self, word, entities, flag):
+        """
+        计算词语和字典中的词的相似度
+        相同字符的个数/min(|A|,|B|)   +  余弦相似度
+        :param word: str
+        :param entities:List
+        :return:
+        """
+        a = len(word)
+        scores = []
+        for entity in entities:
+            sim_num = 0
+            b = len(entity)
+            c = len(set(entity + word))
+            temp = []
+            for w in word:
+                if w in entity:
+                    sim_num += 1
+            if sim_num != 0:
+                score1 = sim_num / c  # overlap score
+                temp.append(score1)
+            try:
+                score2 = self.model.similarity(word, entity)  # 余弦相似度分数
+                temp.append(score2)
+            except:
+                pass
+            score3 = 1 - self.editDistanceDP(word, entity) / (a + b)  # 编辑距离分数
+            if score3:
+                temp.append(score3)
+
+            score = sum(temp) / len(temp)
+            if score >= 0.7:
+                scores.append((entity, score, flag))
+
+        scores.sort(key=lambda k: k[1], reverse=True)
+        return scores
+
+    def find_sim_words(self, question):
+        """
+        当全匹配失败时，就采用相似度计算来找相似的词
+        :param question:
+        :return:
+        """
+
+        jieba.load_userdict(self.vocab_path)
+        self.model = KeyedVectors.load_word2vec_format(self.word2vec_path, binary=False)
+
+        sentence = re.sub("[{}]", re.escape(string.punctuation), question)
+        sentence = re.sub("[，。‘’；：？、！【】]", " ", sentence)
+        sentence = sentence.strip()
+
+        words = [w.strip() for w in jieba.cut(sentence) if w.strip() not in self.stopwords and len(w.strip()) >= 2]
+
+        alist = []
+
+        for word in words:
+            temp = [self.disease_entities, self.alias_entities, self.symptom_entities,
+                    self.complication_entities]  # 待添加
+            for i in range(len(temp)):
+                flag = ''
+                if i == 0:
+                    flag = "Disease"
+                elif i == 1:
+                    flag = "Alias"
+                elif i == 2:
+                    flag = "Symptom"
+                else:
+                    flag = "Complication"
+                scores = self.simCal(word, temp[i], flag)
+                alist.extend(scores)
+        temp1 = sorted(alist, key=lambda k: k[1], reverse=True)
+        if temp1:
+            self.result[temp1[0][2]] = [temp1[0][0]]
+
+    def entity_reg(self, question):
+        for i in self.disease_tree.iter(question):
+            word = i[1][1]
+            if "Disease" not in self.result:
+                self.result["Disease"] = [word]
+            else:
+                self.result["Disease"].append(word)
+
+        return self.result
+
+    def tfidf_features(self, text, vectorizer):
+        """
+        提取问题的TF-IDF特征
+        :param text:
+        :param vectorizer:
+        :return:
+        """
+        jieba.load_userdict(self.vocab_path)
+        words = [w.strip() for w in jieba.cut(text) if w.strip() and w.strip() not in self.stopwords]
+        sents = [' '.join(words)]
+
+        tfidf = vectorizer.transform(sents).toarray()
+        return tfidf
+
+    def other_features(self, text):
+        """
+        提取问题的关键词特征
+        :param text:
+        :return:
+        """
+        features = [0] * 7
+        for d in self.disase_qwds:
+            if d in text:
+                features[0] += 1
+
+        for s in self.symptom_qwds:
+            if s in text:
+                features[1] += 1
+
+        for c in self.cureway_qwds:
+            if c in text:
+                features[2] += 1
+
+        for c in self.check_qwds:
+            if c in text:
+                features[3] += 1
+        for p in self.lasttime_qwds:
+            if p in text:
+                features[4] += 1
+
+        for r in self.cureprob_qwds:
+            if r in text:
+                features[5] += 1
+
+        for d in self.belong_qwds:
+            if d in text:
+                features[6] += 1
+
+        m = max(features)
+        n = min(features)
+        normed_features = []
+        if m == n:
+            normed_features = features
+        else:
+            for i in features:
+                j = (i - n) / (m - n)
+                normed_features.append(j)
+
+        return np.array(normed_features)
+
+    def model_predict(self, x, model):
+        """
+        预测意图
+        :param x:
+        :param model:
+        :return:
+        """
+        pred = model.predict(x)
+        return pred
+
+    def check_words(self, words, sent):
+        """
+        基于特征词分类
+        :param words:
+        :param sent:
+        :return:
+        """
+        for wd in words:
+            if wd in sent:
+                return True
+        return False
+
+    def extractor(self, question):
+        self.entity_reg(question)
+        if not self.result:
+            self.find_sim_words(question)
+
+        types = []  # 实体类型
+        for v in self.result.keys():
+            types.append(v)
+
+        intentions = []  # 查询意图
+
+        tfidf_feature = self.tfidf_features(question, self.tfidf_model)
+        other_feature = self.other_features(question)
+        m = other_feature.shape
+        other_feature = np.reshape(other_feature, (1, m[0]))
+
+        feature = np.concatenate((tfidf_feature, other_feature), axis=1)
+
+        predicted = self.model_predict(feature, self.nb_model)
+        intentions.append(predicted[0])
+
+        # 已知疾病，查询症状
+        if self.check_words(self.symptom_qwds, question) and ('Disease' in types or 'Alia' in types):
+            intention = "query_symptom"
+            if intention not in intentions:
+                intentions.append(intention)
+
+        """
+        more
+        """
+        # 若没有识别出实体或意图则调用其它方法
+        if not intentions or not types:
+            intention = "QA_matching"
+            if intention not in intentions:
+                intentions.append(intention)
+
+        self.result["intentions"] = intentions
+
+        return self.result
+
+
+class KGQA:
+    def __init__(self):
+        self.extractor = EntityExtractor()
+
+    def qa_main(self, input_str):
+        answer = "对不起，您的问题我不知道，我今后会努力改进的。"
+        entities = self.extractor.extractor(input_str)
+        if not entities:
+            return answer
+        print(entities)
+
+if __name__ == "__main__":
+    handler = KGQA()
+    while True:
+        question = input("用户：")
+        if not question:
+            break
+        handler.qa_main(question)
+        print("*"*50)
