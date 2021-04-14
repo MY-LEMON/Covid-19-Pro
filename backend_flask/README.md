@@ -15,13 +15,15 @@ AC自动机能够在一次运行中找到给定集合所有字符串。AC自动�
 
 ### cypher查询语句：
 
+#### 导出数据语句：
+
 **查询所有疾病名称**
 
 match (n:entity{label_zh:'疾病'})-[r:relation]-(p:entity) return p.label_zh
 
 **查询所有症状名称**
 
-match (n:entity)-[r:relation]-(p:entity) WHERE r.label_zh=~'.*症状' return distinct p.label_zh
+match (n:entity)-[r:relation]->(p:entity) WHERE r.label_zh=~'.*症状' return distinct p.label_zh
 
 **查询所有药物名称**（有乱入的）
 
@@ -30,3 +32,12 @@ match (n:entity)-[r:relation]-(p:entity) WHERE r.label_zh=~'.*药.*' return dist
 **查询所有科室名称**（有乱入的）
 
 match (n:entity)-[r:relation]->(p:entity) WHERE r.label_zh=~'.*科室.*' or r.label_zh=~'.*专科.*' return distinct p.label_zh
+
+
+
+#### 查询语句：
+
+
+
+新型冠状病毒肺炎有哪些症状
+

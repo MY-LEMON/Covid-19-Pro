@@ -1,7 +1,7 @@
 import os
 import re
-from settings import NEO4J_USER, NEO4J_PASSWORD, NEO4J_HOST, data_dir, word2vec_dir
-from py2neo import Graph, Node, Relationship
+from settings import *
+from QAsearch import CovidGraph
 import ahocorasick
 import jieba
 from gensim.models import KeyedVectors
@@ -10,16 +10,16 @@ import joblib
 import numpy as np
 
 
-class CovidGraph:
-    def __init__(self):
-        self.graph = Graph(NEO4J_HOST, username=NEO4J_USER, password=NEO4J_PASSWORD)
-
-
 class EntityExtractor:
     def __init__(self):
         self.result = {}
 
+        # 所有词汇
         self.disease_path = data_dir + 'disease_vocab.txt'  # 所有疾病词汇
+        self.symptom_path = data_dir + 'symptom_vocab.txt'
+        self.alias_path = data_dir + 'alias_vocab.txt'
+        self.complication_path = data_dir + 'complications_vocab.txt'
+
         self.vocab_path = data_dir + 'vocab.txt'  # 所有词汇
         self.word2vec_path = word2vec_dir  # 中文预训练词向量
         self.stopwords_path = data_dir + 'stop_words.utf8'
@@ -33,11 +33,14 @@ class EntityExtractor:
         self.nb_model = joblib.load(self.nb_path)
 
         self.disease_entities = [w.strip() for w in open(self.disease_path, encoding='utf8') if w.strip()]
-        self.complication_entities = []
-        self.symptom_entities = []
-        self.alias_entities = []
+        self.symptom_entities = [w.strip() for w in open(self.symptom_path, encoding='utf8') if w.strip()]
+        self.alias_entities = [w.strip() for w in open(self.alias_path, encoding='utf8') if w.strip()]
+        self.complication_entities = [w.strip() for w in open(self.complication_path, encoding='utf8') if w.strip()]
 
         self.disease_tree = self.build_actree(list(set(self.disease_entities)))
+        self.alias_tree = self.build_actree(list(set(self.alias_entities)))
+        self.symptom_tree = self.build_actree(list(set(self.symptom_entities)))
+        self.complication_tree = self.build_actree(list(set(self.complication_entities)))
 
         self.symptom_qwds = ['什么症状', '哪些症状', '症状有哪些', '症状是什么', '什么表征', '哪些表征', '表征是什么',
                              '什么现象', '哪些现象', '现象有哪些', '症候', '什么表现', '哪些表现', '表现有哪些',
@@ -177,6 +180,27 @@ class EntityExtractor:
             else:
                 self.result["Disease"].append(word)
 
+        for i in self.alias_tree.iter(question):
+            word = i[1][1]
+            if "Alias" not in self.result:
+                self.result["Alias"] = [word]
+            else:
+                self.result["Alias"].append(word)
+
+        for i in self.symptom_tree.iter(question):
+            wd = i[1][1]
+            if "Symptom" not in self.result:
+                self.result["Symptom"] = [wd]
+            else:
+                self.result["Symptom"].append(wd)
+
+        for i in self.complication_tree.iter(question):
+            wd = i[1][1]
+            if "Complication" not in self.result:
+                self.result["Complication"] = [wd]
+            else:
+                self.result["Complication"].append(wd)
+
         return self.result
 
     def tfidf_features(self, text, vectorizer):
@@ -305,6 +329,7 @@ class EntityExtractor:
 class KGQA:
     def __init__(self):
         self.extractor = EntityExtractor()
+        self.searcher = CovidGraph()
 
     def qa_main(self, input_str):
         answer = "对不起，您的问题我不知道，我今后会努力改进的。"
@@ -312,6 +337,13 @@ class KGQA:
         if not entities:
             return answer
         print(entities)
+        sqls = self.searcher.question_parser(entities)
+        final_answer = self.searcher.searching(sqls)
+        if not final_answer:
+            return answer
+        else:
+            return final_answer
+
 
 if __name__ == "__main__":
     handler = KGQA()
@@ -319,5 +351,6 @@ if __name__ == "__main__":
         question = input("用户：")
         if not question:
             break
-        handler.qa_main(question)
-        print("*"*50)
+        answer = handler.qa_main(question)
+        print(answer)
+        print("*" * 50)
