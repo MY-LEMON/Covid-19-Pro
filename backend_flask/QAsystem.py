@@ -346,8 +346,8 @@ class KGQA:
 
 
 if __name__ == "__main__":
-    handler = KGQA()
     while True:
+        handler = KGQA()
         question = input("用户：")
         if not question:
             break

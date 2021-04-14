@@ -45,10 +45,10 @@ class CovidGraph:
 
         # 查询症状
         '''
-        match (n:entity)-[r:relation]-(p:entity)  WHERE n.label_zh='新型冠状病毒肺炎' and r.label_zh=~'.*症状' return p.label_zh
+        match (n:entity)-[r:relation]->(p:entity)  WHERE n.label_zh='新型冠状病毒肺炎' and r.label_zh=~'.*症状' return p.label_zh
         '''
         if intent == "query_symptom" and label == "Disease":
-            sql = ["match (n:entity)-[r:relation]-(p:entity)  WHERE n.label_zh='{0}' and r.label_zh=~'.*症状' return p.label_zh".format(e)
+            sql = ["match (n:entity)-[r:relation]->(p:entity)  WHERE n.label_zh='{0}' and r.label_zh=~'.*症状' return p.label_zh".format(e)
                    for e in entities]
 
 

@@ -39,5 +39,5 @@ match (n:entity)-[r:relation]->(p:entity) WHERE r.label_zh=~'.*科室.*' or r.la
 
 
 
-新型冠状病毒肺炎有哪些症状
+弓形虫病有哪些症状
 
