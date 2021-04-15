@@ -64,6 +64,7 @@ class CovidGraph:
         final_answers = []
         for sql_ in sqls:
             intent = sql_['intention']
+            ress = []
             queries = sql_['sql']
             answers = []
             for query in queries:

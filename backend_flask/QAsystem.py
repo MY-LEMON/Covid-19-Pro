@@ -1,7 +1,5 @@
-import os
 import re
 from settings import *
-from QAsearch import CovidGraph
 import ahocorasick
 import jieba
 from gensim.models import KeyedVectors
@@ -12,18 +10,31 @@ import numpy as np
 
 class EntityExtractor:
     def __init__(self):
+
         self.result = {}
 
-        # 所有词汇
+        # 所有词汇导入
         self.disease_path = data_dir + 'disease_vocab.txt'  # 所有疾病词汇
         self.symptom_path = data_dir + 'symptom_vocab.txt'
         self.alias_path = data_dir + 'alias_vocab.txt'
         self.complication_path = data_dir + 'complications_vocab.txt'
 
+        # 构建领域词词库
+        self.disease_entities = [w.strip() for w in open(self.disease_path, encoding='utf8') if w.strip()]
+        self.symptom_entities = [w.strip() for w in open(self.symptom_path, encoding='utf8') if w.strip()]
+        self.alias_entities = [w.strip() for w in open(self.alias_path, encoding='utf8') if w.strip()]
+        self.complication_entities = [w.strip() for w in open(self.complication_path, encoding='utf8') if w.strip()]
+
+        # 构建ac树加快查询
+        self.disease_tree = self.build_actree(list(set(self.disease_entities)))
+        self.alias_tree = self.build_actree(list(set(self.alias_entities)))
+        self.symptom_tree = self.build_actree(list(set(self.symptom_entities)))
+        self.complication_tree = self.build_actree(list(set(self.complication_entities)))
+
+        # 训练模型
         self.vocab_path = data_dir + 'vocab.txt'  # 所有词汇
         self.word2vec_path = word2vec_dir  # 中文预训练词向量
         self.stopwords_path = data_dir + 'stop_words.utf8'
-
         self.stopwords = [w.strip() for w in open(self.stopwords_path, 'r', encoding='utf8') if w.strip()]  # 停词
 
         # 训练模型
@@ -32,16 +43,7 @@ class EntityExtractor:
         self.tfidf_model = joblib.load(self.tfidf_path)
         self.nb_model = joblib.load(self.nb_path)
 
-        self.disease_entities = [w.strip() for w in open(self.disease_path, encoding='utf8') if w.strip()]
-        self.symptom_entities = [w.strip() for w in open(self.symptom_path, encoding='utf8') if w.strip()]
-        self.alias_entities = [w.strip() for w in open(self.alias_path, encoding='utf8') if w.strip()]
-        self.complication_entities = [w.strip() for w in open(self.complication_path, encoding='utf8') if w.strip()]
-
-        self.disease_tree = self.build_actree(list(set(self.disease_entities)))
-        self.alias_tree = self.build_actree(list(set(self.alias_entities)))
-        self.symptom_tree = self.build_actree(list(set(self.symptom_entities)))
-        self.complication_tree = self.build_actree(list(set(self.complication_entities)))
-
+        # 问句词典
         self.symptom_qwds = ['什么症状', '哪些症状', '症状有哪些', '症状是什么', '什么表征', '哪些表征', '表征是什么',
                              '什么现象', '哪些现象', '现象有哪些', '症候', '什么表现', '哪些表现', '表现有哪些',
                              '什么行为', '哪些行为', '行为有哪些', '什么状况', '哪些状况', '状况有哪些', '现象是什么',
@@ -60,6 +62,7 @@ class EntityExtractor:
         self.belong_qwds = ['属于什么科', '什么科', '科室', '挂什么', '挂哪个', '哪个科', '哪些科']  # 询问科室
         self.disase_qwds = ['什么病', '啥病', '得了什么', '得了哪种', '怎么回事', '咋回事', '回事',
                             '什么情况', '什么问题', '什么毛病', '啥毛病', '哪种病']  # 询问疾病
+        self.dirtywords_qwds = ['傻逼', '臭傻逼']
 
     def build_actree(self, wordlist):
         """
@@ -76,7 +79,7 @@ class EntityExtractor:
 
     def editDistanceDP(self, s1, s2):
         """
-        采用DP方法计算编辑距离
+        采用DP方法计算编辑距离，用于词向量计算余弦
         :param s1:
         :param s2:
         :return:
@@ -141,7 +144,6 @@ class EntityExtractor:
         :param question:
         :return:
         """
-
         jieba.load_userdict(self.vocab_path)
         self.model = KeyedVectors.load_word2vec_format(self.word2vec_path, binary=False)
 
@@ -306,9 +308,18 @@ class EntityExtractor:
         predicted = self.model_predict(feature, self.nb_model)
         intentions.append(predicted[0])
 
+        # 预测失败时删除错误结果，防止意图混淆
+        if 'query_period' in intentions:
+            intentions.remove('query_period')
+
         # 已知疾病，查询症状
         if self.check_words(self.symptom_qwds, question) and ('Disease' in types or 'Alia' in types):
             intention = "query_symptom"
+            if intention not in intentions:
+                intentions.append(intention)
+
+        if self.check_words(self.dirtywords_qwds, question) and ('Disease' in types or 'Alia' in types):
+            intention = "query_dirtywords"
             if intention not in intentions:
                 intentions.append(intention)
 
@@ -324,33 +335,3 @@ class EntityExtractor:
         self.result["intentions"] = intentions
 
         return self.result
-
-
-class KGQA:
-    def __init__(self):
-        self.extractor = EntityExtractor()
-        self.searcher = CovidGraph()
-
-    def qa_main(self, input_str):
-        answer = "对不起，您的问题我不知道，我今后会努力改进的。"
-        entities = self.extractor.extractor(input_str)
-        if not entities:
-            return answer
-        print(entities)
-        sqls = self.searcher.question_parser(entities)
-        final_answer = self.searcher.searching(sqls)
-        if not final_answer:
-            return answer
-        else:
-            return final_answer
-
-
-if __name__ == "__main__":
-    while True:
-        handler = KGQA()
-        question = input("用户：")
-        if not question:
-            break
-        answer = handler.qa_main(question)
-        print(answer)
-        print("*" * 50)
