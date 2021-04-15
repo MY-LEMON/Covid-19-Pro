@@ -308,9 +308,10 @@ class EntityExtractor:
         predicted = self.model_predict(feature, self.nb_model)
         intentions.append(predicted[0])
 
-        # 预测失败时删除错误结果，防止意图混淆
-        if 'query_period' in intentions:
-            intentions.remove('query_period')
+        # # 预测失败时删除错误结果，防止意图混淆
+        # if 'query_period' in intentions:
+        #     intentions.remove('query_period')
+        intentions.clear()
 
         # 已知疾病，查询症状
         if self.check_words(self.symptom_qwds, question) and ('Disease' in types or 'Alia' in types):
