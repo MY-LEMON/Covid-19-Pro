@@ -14,11 +14,11 @@ class KGQA:
             return answer
         print(entities)
         sqls = self.searcher.question_parser(entities)
-        final_answer = self.searcher.searching(sqls)
+        final_answer, node_relation = self.searcher.searching(sqls)
         if not final_answer:
             return answer
         else:
-            return final_answer
+            return final_answer, node_relation
 
 
 if __name__ == "__main__":
@@ -27,6 +27,6 @@ if __name__ == "__main__":
         question = input("用户：")
         if not question:
             break
-        answer = handler.qa_main(question)
-        print(answer)
+        final_answer, node_relation = handler.qa_main(question)
+        print(final_answer, node_relation)
         print("*" * 50)
