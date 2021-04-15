@@ -68,8 +68,8 @@ def search_kg():
             return jsonify(resData)
 
         handler = KGQA()
-        answer = handler.qa_main(key)
-        if len(answer) == 0:
+        final_answer, node_relation = handler.qa_main(question)
+        if len(final_answer) == 0:
             resData = {
                 "resCode": 0,  # 非0即错误 1
                 "data": [],  # 数据位置，一般为数组
@@ -79,7 +79,7 @@ def search_kg():
 
         resData = {
             "resCode": 0,  # 非0即错误 1
-            "data": answer[0],  # 数据位置，一般为数组
+            "data": final_answer[0],  # 数据位置，一般为数组
             "message": '搜索结果'
         }
         return jsonify(resData)
