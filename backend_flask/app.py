@@ -58,6 +58,7 @@ def search_kg():
     if request.method == 'POST':
         get_data = json.loads(request.get_data(as_text=True))
         key = get_data['key']
+
         print(key)
         if is_string_validate(key):
             resData = {
@@ -68,7 +69,7 @@ def search_kg():
             return jsonify(resData)
 
         handler = KGQA()
-        final_answer, node_relation = handler.qa_main(question)
+        final_answer, node_relation = handler.qa_main(key)
         if len(final_answer) == 0:
             resData = {
                 "resCode": 0,  # 非0即错误 1
