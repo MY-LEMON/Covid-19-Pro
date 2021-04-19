@@ -53,7 +53,7 @@ def bbb():
     return jsonify('world', methods=['POST'])
 
 
-@app.route('/search', methods=['POST'])
+@app.route('/search', methods=['POST','GET'])
 def search_kg():
     if request.method == 'POST':
         get_data = json.loads(request.get_data(as_text=True))
@@ -80,9 +80,11 @@ def search_kg():
 
         resData = {
             "resCode": 0,  # 非0即错误 1
-            "data": final_answer[0],  # 数据位置，一般为数组
+            "data": [final_answer[0], node_relation[0]],  # 数据位置，一般为数组
             "message": '搜索结果'
         }
+        print("结果")
+        print([final_answer[0], node_relation[0]])
         return jsonify(resData)
     else:
         resData = {
@@ -96,4 +98,5 @@ def search_kg():
 
 if __name__ == '__main__':
     # app.run(host='127.0.0.1', port=1943, debug=True)
-    app.run()
+    app.run(host="0.0.0.0", port=5000, debug=True)
+    # app.run()
