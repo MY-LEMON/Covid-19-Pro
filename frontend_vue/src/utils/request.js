@@ -7,7 +7,7 @@ import { Message } from 'element-ui'    //引入 element-ui 的 Message 模块�
 
 // create an axios instance   创建axios实例
 const service = axios.create({
-    baseURL: 'http://vscode.geralt.cn:5000', // api 的 base_url
+    baseURL: 'https://bdc51f09-c370-4318-9d0d-5cacb9fa267f.mock.pstmn.io', // api 的 base_url
     timeout: 5000, // request timeout  设置请求超时时间
 //     // responseType: "json",
 //     withCredentials: true, // 是否允许带cookie这些

@@ -21,8 +21,8 @@ export default {
   methods: {
     search(key){
       doSearch(key).then(resp=>{
-        this.item = resp.data
-        console.log(this.item)
+        this.item = 'done'
+        console.log(resp.data)
       })
     }
   }
