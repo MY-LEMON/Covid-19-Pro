@@ -5,38 +5,36 @@ from py2neo import Graph, Node, Relationship
 class CovidGraph:
     def __init__(self):
         self.graph = Graph(NEO4J_HOST, username=NEO4J_USER, password=NEO4J_PASSWORD)
+        self.name_dict = ["Disease", "Alias", "Symptom", "Complication", "infectorname", "place", "date", "transport",
+                          "hospital", "type"]
 
     def question_parser(self, data):
 
         """
         主要是根据不同的实体和意图构造cypher查询语句
         :param data
-        :return:
+        :return:return:格式[{意图：***，CQL语句：，sql_graph：]
         """
         sqls = []
+        print(data, "*********this is data 函数question_parser********")
         if data:
             for intent in data["intentions"]:
                 sql_ = {}
                 sql_["intention"] = intent
+                sql_['sql_sent'] = []
+                sql_['sql_graph'] = []
                 sql_sent = []  # 单一答案，用于写人话
                 sql_graph = []  # 节点+关系，用于画图谱
-                if data.get("Disease"):
-                    sql_sent = self.transfor_to_sql("Disease_sent", data["Disease"], intent)
-                    sql_graph = self.transfor_to_sql("Disease_graph", data["Disease"], intent)
-                elif data.get("Alias"):
-                    sql_sent = self.transfor_to_sql("Alias", data["Alias"], intent)
-                    sql_graph = self.transfor_to_sql("Alias", data["Alias"], intent)
-                elif data.get("Symptom"):
-                    sql_sent = self.transfor_to_sql("Symptom", data["Symptom"], intent)
-                    sql_graph = self.transfor_to_sql("Symptom", data["Symptom"], intent)
-                elif data.get("Complication"):
-                    sql_sent = self.transfor_to_sql("Complication", data["Complication"], intent)
-                    sql_graph = self.transfor_to_sql("Complication", data["Complication"], intent)
-                if sql_sent:
-                    sql_['sql_sent'] = sql_sent
-                if sql_graph:
-                    sql_['sql_graph'] = sql_graph
-                sqls.append(sql_)
+                for name in iter(self.name_dict):
+                    if data.get(name):
+                        sql_sent = self.transfor_to_sql(name + "_sent", data[name], intent)
+                        sql_graph = self.transfor_to_sql(name + "_graph", data[name], intent)
+                    if sql_sent:
+                        sql_['sql_sent'] = sql_sent
+                    if sql_graph:
+                        sql_['sql_graph'] = sql_graph
+                    if sql_['sql_sent'] or sql_['sql_graph']:
+                        sqls.append(sql_)
         return sqls
 
     def transfor_to_sql(self, label, entities, intent):
@@ -50,7 +48,9 @@ class CovidGraph:
         if not entities:
             return []
         sql = []
-
+        entity = ''
+        for e in entities:
+            entity = entity + e
         # 查询症状
         if intent == "query_symptom" and label == "Disease_sent":
             sql = [
@@ -60,8 +60,68 @@ class CovidGraph:
             sql = [
                 "match (n:entity)-[r:relation]->(p:entity)  WHERE n.label_zh='{0}' and r.label_zh=~'.*症状' return id(n),properties(n),properties(r),id(p),properties(p)".format(
                     e) for e in entities]
-        #
 
+        # 查询传播方式
+        if intent == "query_route" and label == "Disease_sent":
+            sql = [
+                "match (n:entity)-[r:relation]-(p:entity) WHERE n.label_zh=~'新型冠状病毒.*'and r.label_zh=~'.+传播途径' return distinct n.label_zh,p.label_zh".format(
+                    entity)]
+        if intent == "query_route" and label == "Disease_graph":
+            sql = [
+                "match (n:entity)-[r:relation]-(p:entity) WHERE n.label_zh=~'新型冠状病毒.*'and r.label_zh=~'.+传播途径' return distinct id(n),properties(n),properties(r),id(p),properties(p)".format(entity)]
+
+        # 查询治疗方法
+        if intent == "query_cureway" and label == "Disease_sent":
+            sql = [
+                "match (n:entity)WHERE exists (n.`治疗方法`) and n.label_zh = '{}' return distinct n.label_zh,n.`治疗方法` AS Treatment".format(
+                    entity)]
+        if intent == "query_cureway" and label == "Disease_graph":
+            sql = [
+                "".format(entity)]
+
+        # 查询科室
+        if intent == "query_belong" and label == "Disease_sent":
+            sql = [
+                "match (n:entity)-[r:relation]->(p:entity) WHERE r.label_zh='医学专科' and n.label_zh = '{}' return distinct n.label_zh,p.label_zh".format(
+                    entity)]
+        if intent == "query_belong" and label == "Disease_graph":
+            sql = [
+                "match (n:entity)-[r:relation]->(p:entity) WHERE r.label_zh='医学专科' and n.label_zh = '{}' return distinct id(n),properties(n),properties(r),id(p),properties(p)".format(entity)]
+
+            # 查询预防方法
+            if intent == "query_prevent" and label == "Disease_sent":
+                sql = [
+                    "match (n:entity)WHERE exists (n.`预防`) and n.label_zh='{}' return distinct n.label_zh,n.`预防` AS `prevention`".format(
+                        entity)]
+            if intent == "query_prevent" and label == "Disease_graph":
+                sql = [
+                    "".format(entity)]
+
+        # 查询就诊医院
+        if intent == "query_hospital" and label == "infectorname_sent":
+            sql = [
+                "match (n:`病例`)-[r:`就诊`]-(p:`医院`) where n.`名称`='{0}' return n.名称,p.名称".format(entities[-1])]
+        if intent == "query_hospital" and label == "infectorname_graph":
+            sql = [
+                "match (n:`病例`)-[r:`就诊`]-(p:`医院`) where n.`名称`='{0}' return n.名称,p.名称".format(entities[-1])]
+
+        # 查询出发地
+        if intent == "query_sp" and label == "infectorname_sent":
+            sql = [
+                "match (n:`病例`)-[r:`出发地点`]-(p:`地点`) where n.`名称`='{0}' return n.名称,p.名称".format(entities[-1])]
+        if intent == "query_hospital" and label == "infectorname_graph":
+            sql = [
+                "match (n:`病例`)-[r:`出发地点`]-(p:`地点`) where n.`名称`='{0}' return n.名称,p.名称".format(entities[-1])]
+
+        # 查询某天确诊人数
+        if intent == "query_def" and label == "date_sent":
+            sql = [
+                "match (n:`病例`)-[r:`境外输入无症状感染者`]-(p:`日期`) where p.`名称`='2月21日' return n.名称,p.名称".format(entities[-1])]
+        if intent == "query_hospital" and label == "infectorname_graph":
+            sql = [
+                "match (n:`病例`)-[r:`境外输入无症状感染者`]-(p:`日期`) where p.`名称`='2月21日' return n.名称,p.名称".format(entities[-1])]
+
+        print(sql, "*********this is sql 函数trans********")
         return sql
 
     def searching(self, sqls):
@@ -88,9 +148,9 @@ class CovidGraph:
             for query in queries_graph:
                 resp = self.graph.run(query).data()
                 print(resp)
-                if resp:
-                    data_json = self.data2json(resp)
-                    node_relation.append(data_json)
+                # if resp:
+                #     data_json = self.data2json(resp)
+                #     node_relation.append(data_json)
 
         return final_answers, node_relation
 
@@ -116,6 +176,90 @@ class CovidGraph:
                     disease_dic[n].append(p)
             for k, v in disease_dic.items():
                 final_answer += "疾病 {0} 的症状有：{1}\n".format(k, ','.join(list(set(v))))
+
+        if intent == "query_route":
+            disease_dic = {}
+            for data in answers:
+                n = data['n.label_zh']
+                p = data['p.label_zh']
+                if n not in disease_dic:
+                    disease_dic[n] = [p]
+                else:
+                    disease_dic[n].append(p)
+            for k, v in disease_dic.items():
+                final_answer += "疾病 {0} 的传播方式有：{1}\n".format(k, ','.join(list(set(v))))
+
+        if intent == "query_cureway":
+            disease_dic = {}
+            for data in answers:
+                n = data['n.label_zh']
+                p = data['Treatment']
+                if n not in disease_dic:
+                    disease_dic[n] = [p]
+                else:
+                    disease_dic[n].append(p)
+            for k, v in disease_dic.items():
+                final_answer += "疾病 {0} 的治疗方式有：{1}\n".format(k, ','.join(list(set(v))))
+
+        if intent == "query_belong":
+            disease_dic = {}
+            for data in answers:
+                n = data['n.label_zh']
+                p = data['p.label_zh']
+                if n not in disease_dic:
+                    disease_dic[n] = [p]
+                else:
+                    disease_dic[n].append(p)
+            for k, v in disease_dic.items():
+                final_answer += "疾病 {0} 应该挂：{1}\n".format(k, ','.join(list(set(v))))
+
+        if intent == "query_prevent":
+            disease_dic = {}
+            for data in answers:
+                n = data['n.label_zh']
+                p = data['prevention']
+                if n not in disease_dic:
+                    disease_dic[n] = [p]
+                else:
+                    disease_dic[n].append(p)
+            for k, v in disease_dic.items():
+                final_answer += "疾病 {0} 的预防方法是：{1}\n".format(k, ','.join(list(set(v))))
+
+        if intent == "query_hospital":
+            hospital_dic = {}
+            for data in answers:
+                n = data['n.名称']
+                p = data['p.名称']
+                if n not in hospital_dic:
+                    hospital_dic[n] = [p]
+                else:
+                    hospital_dic[n].append(p)
+            for k, v in hospital_dic.items():
+                final_answer += "{0}的就诊医院是：{1}\n".format(k, ','.join(list(set(v))))
+
+        if intent == "query_sp":
+            sp_dic = {}
+            for data in answers:
+                n = data['n.名称']
+                p = data['p.名称']
+                if n not in sp_dic:
+                    sp_dic[n] = [p]
+                else:
+                    sp_dic[n].append(p)
+            for k, v in sp_dic.items():
+                final_answer += "{0}是从{1}出发的\n".format(k, ','.join(list(set(v))))
+
+        if intent == "query_def":
+            def_dic = {}
+            for data in answers:
+                n = data['n.名称']
+                p = data['p.名称']
+                if p not in def_dic:
+                    def_dic[p] = [n]
+                else:
+                    def_dic[p].append(n)
+            for k, v in def_dic.items():
+                final_answer += "{0}确诊的病例有：{1}\n".format(k, ','.join(list(set(v))))
 
         return final_answer
 
@@ -150,8 +294,7 @@ class CovidGraph:
             links.append(link)
 
         import json
-        with open("data.json", "w",encoding='utf-8') as f:
-            json.dump({'rootId': str(rootID), 'nodes':nodes, 'links':links}, f, ensure_ascii = False)
+        with open("data.json", "w", encoding='utf-8') as f:
+            json.dump({'rootId': str(rootID), 'nodes': nodes, 'links': links}, f, ensure_ascii=False)
 
-        return {'rootId': str(rootID), 'nodes':nodes, 'links':links}
-
+        return {'rootId': str(rootID), 'nodes': nodes, 'links': links}
