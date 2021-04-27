@@ -33,6 +33,7 @@ class GetData:
 class CsvData:
     def __init__(self):
         self.vaccinations = pd.read_csv(r'data_csv/vaccinations.csv')
+        self.vaccinations_data = pd.read_csv('data_csv/data_vaccinations.csv')
         self.head_num = 20
 
     def get_vaccinations_data(self):
@@ -71,12 +72,10 @@ class CsvData:
         temp1.drop(drop_list, inplace=True)
         temp1.reset_index(drop=True, inplace=True)
 
-        print(temp1)
-        temp1.to_csv('data_vaccinations.csv')
+        temp1.to_csv('data_csv/data_vaccinations.csv')
 
 
 if __name__ == "__main__":
     get_data = CsvData()
-    get_data.get_vaccinations_data()
-    data = get_data.vaccinations
+    data = get_data.vaccinations_data
     print(data)
