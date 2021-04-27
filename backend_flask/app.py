@@ -6,6 +6,7 @@ import base64
 import time
 import random
 from QAmain import KGQA
+from NewsCenter import News
 
 """
 接口说明：
@@ -21,9 +22,10 @@ from QAmain import KGQA
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
+
 # 检查是否含有特殊字符
 def is_string_validate(str):
-    sub_str = re.sub(u"([^\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a])","",str)
+    sub_str = re.sub(u"([^\u4e00-\u9fa5\u0030-\u0039\u0041-\u005a\u0061-\u007a])", "", str)
     if len(str) == len(sub_str):
         # 说明合法
         return False
@@ -53,7 +55,7 @@ def bbb():
     return jsonify('world', methods=['POST'])
 
 
-@app.route('/search', methods=['POST','GET'])
+@app.route('/search', methods=['POST', 'GET'])
 def search_kg():
     if request.method == 'POST':
         get_data = json.loads(request.get_data(as_text=True))
@@ -87,15 +89,36 @@ def search_kg():
         return jsonify(resData)
     else:
         resData = {
-            "resCode": 1, # 非0即错误 1
-            "data": [],# 数据位置，一般为数组
+            "resCode": 1,  # 非0即错误 1
+            "data": [],  # 数据位置，一般为数组
             "message": '请求方法错误'
         }
         return jsonify(resData)
 
 
+@app.route('/news', methods=['POST', 'GET'])
+def news_view():
+    if request.method == 'GET':
+        new = News()
+        n = 3
+        news_data = new.get_news_limit(n)
+        resData = {
+            "resCode": 0,  # 非0即错误 1
+            "data": news_data,  # 数据位置，一般为数组
+            "message": '新闻结果'
+        }
+        print(jsonify(resData))
+        return jsonify(resData)
+    else:
+        resData = {
+            "resCode": 1,  # 非0即错误 1
+            "data": [],  # 数据位置，一般为数组
+            "message": '请求方法错误'
+        }
+        return jsonify(resData)
+
 
 if __name__ == '__main__':
-    # app.run(host='127.0.0.1', port=1943, debug=True)
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host='127.0.0.1', port=1943, debug=True)
+    # app.run(host="0.0.0.0", port=5000, debug=True)
     # app.run()
