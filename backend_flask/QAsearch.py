@@ -58,7 +58,8 @@ class CovidGraph:
                     e) for e in entities]
         if intent == "query_symptom" and label == "Disease_graph":
             sql = [
-                "".format(e) for e in entities]
+                "match (n:entity)-[r:relation]->(p:entity)  WHERE n.label_zh='{0}' and r.label_zh=~'.*症状' return id(n),properties(n),properties(r),id(p),properties(p)".format(
+                    e) for e in entities]
         #
 
         return sql
@@ -88,16 +89,10 @@ class CovidGraph:
                 resp = self.graph.run(query).data()
                 print(resp)
                 if resp:
-                    node_relation.append(resp)
+                    data_json = self.data2json(resp)
+                    node_relation.append(data_json)
 
         return final_answers, node_relation
-
-    [{'n.label_zh': '新型冠状病毒肺炎', 'p.label_zh': '呼吸困难'}, {'n.label_zh': '新型冠状病毒肺炎', 'p.label_zh': '咽痛'},
-     {'n.label_zh': '新型冠状病毒肺炎', 'p.label_zh': '流涕'}, {'n.label_zh': '新型冠状病毒肺炎', 'p.label_zh': '腹泻'},
-     {'n.label_zh': '新型冠状病毒肺炎', 'p.label_zh': '乏力'}, {'n.label_zh': '新型冠状病毒肺炎', 'p.label_zh': '脓毒症休克'},
-     {'n.label_zh': '新型冠状病毒肺炎', 'p.label_zh': '多器官功能衰竭'}, {'n.label_zh': '新型冠状病毒肺炎', 'p.label_zh': '急性呼吸窘迫综合征'},
-     {'n.label_zh': '新型冠状病毒肺炎', 'p.label_zh': '鼻塞'}, {'n.label_zh': '新型冠状病毒肺炎', 'p.label_zh': '干咳'},
-     {'n.label_zh': '新型冠状病毒肺炎', 'p.label_zh': '低氧血症'}, {'n.label_zh': '新型冠状病毒肺炎', 'p.label_zh': '发热'}]
 
     def answer_template(self, intent, answers):
         """
@@ -123,3 +118,40 @@ class CovidGraph:
                 final_answer += "疾病 {0} 的症状有：{1}\n".format(k, ','.join(list(set(v))))
 
         return final_answer
+
+    def data2json(self, resp):
+
+        rootID = resp[0]['id(n)']
+        nodes = []
+        links = []
+        for nrp in iter(resp):
+
+            node_a = {'id': '', 'name': '', 'data': {}}
+            node_b = {'id': '', 'name': '', 'data': {}}
+            link = {'from': '', 'to': '', 'text': '', 'data': {}}
+
+            node_a['id'] = str(nrp['id(n)'])
+            node_a['name'] = nrp['properties(n)']['label_zh']
+            node_a['data'] = nrp['properties(n)']
+
+            node_b['id'] = str(nrp['id(p)'])
+            node_b['name'] = nrp['properties(p)']['label_zh']
+            node_b['data'] = nrp['properties(p)']
+
+            link['from'] = node_a['id']
+            link['to'] = node_b['id']
+            link['text'] = nrp['properties(r)']['label_zh']
+            link['data'] = nrp['properties(r)']
+
+            if node_a not in nodes:
+                nodes.append(node_a)
+            if node_b not in nodes:
+                nodes.append(node_b)
+            links.append(link)
+
+        import json
+        with open("data.json", "w",encoding='utf-8') as f:
+            json.dump({'rootId': str(rootID), 'nodes':nodes, 'links':links}, f, ensure_ascii = False)
+
+        return {'rootId': str(rootID), 'nodes':nodes, 'links':links}
+
