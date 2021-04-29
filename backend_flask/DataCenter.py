@@ -2,6 +2,9 @@ import requests
 import json
 import pandas as pd
 import numpy as np
+import time
+import os
+
 
 
 class GetData:
@@ -11,23 +14,56 @@ class GetData:
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36 Edg/89.0.774.50'}
         self.encoding = 'utf-8'
-        self.res = requests.get(self.url + self.url_area, headers=self.headers)  # request
-        self.data = self.res.content.decode(self.encoding)
+        self.res = ''
+        self.data = ''
 
-        self.data_china_2front = []
+        self.data_dict = {}
+        self.data_china = []
+        self.data_province = []
+
+        self.load_data()
+
+    def load_data(self):
+        if not os.path.exists("./data_covid19/" + time.strftime("%Y%m%d", time.localtime()) + "data.json"):
+            self.res = requests.get(self.url + self.url_area, headers=self.headers)  # request
+            self.data = self.res.content.decode(self.encoding)
+
+            self.data_dict = json.loads(self.data)
+            with open("./data_covid19/" + time.strftime("%Y%m%d", time.localtime()) + "data.json", "w") as f:
+                json.dump(self.data_dict, f)
+        else:
+            with open("./data_covid19/" + time.strftime("%Y%m%d", time.localtime()) + "data.json", 'r') as load_f:
+                self.data_dict = json.load(load_f)
 
     def get_china_data(self):
-        data_dict = json.loads(self.data)
+        # self.data_dict = json.loads(self.data)
         data_china = []
 
-        for city in data_dict['results']:
+        for city in self.data_dict['results']:
             city_data = {'name': '', 'value': []}
             if city['countryName'] == '中国':
                 data_china.append(city)
                 city_data['name'] = city['provinceShortName']
                 city_data['value'] = [city['confirmedCount'], city['suspectedCount'], city['curedCount'],
                                       city['deadCount'], city['currentConfirmedCount']]
-                self.data_china_2front.append(city_data)
+                self.data_china.append(city_data)
+
+        return self.data_china
+
+    def get_province_data(self):
+        self.data_dict = json.loads(self.data)
+        data_province = []
+
+        for city in self.data_dict['results']:
+            city_data = {'name': '', 'value': []}
+            if city['countryName'] == '中国':
+                data_province.append(city)
+                city_data['name'] = city['provinceShortName']
+                city_data['value'] = [city['confirmedCount'], city['suspectedCount'], city['curedCount'],
+                                      city['deadCount'], city['currentConfirmedCount']]
+                self.data_china.append(city_data)
+
+        return self.data_china
 
 
 class CsvData:
@@ -76,6 +112,10 @@ class CsvData:
 
 
 if __name__ == "__main__":
-    get_data = CsvData()
-    data = get_data.vaccinations_data
+    # print(os.path.exists('./data_covid19/app.py'))
+    get_data = GetData()
+    data = get_data.get_china_data()
     print(data)
+    # get_data = CsvData()
+    # data = get_data.vaccinations_data
+    # print(data)
