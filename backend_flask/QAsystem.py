@@ -88,6 +88,7 @@ class EntityExtractor:
         self.prevent_qwds = ['预防', '防治', '预防方法', '什么方法', '怎么预防', '怎么防治', '预防措施', '防治措施', '如何预防',
                              '如何防治', '怎样预防', '咋预防', '咋防治']
         self.route_qwds = ['传播途径', '途径', '方式', '怎么传播', '传播', '传播方式', '如何传播', '什么方式传播', '什么途径', '什么方式']
+        self.cov_qwds = ['新型冠状病毒肺炎是什么', '新型冠状病毒肺炎是啥', '介绍新型冠状病毒肺炎', '了解新型冠状病毒肺炎']
 
         self.queryhos_qwds = ['哪家医院', '医院', '在哪就医', '送哪个医院', '在哪就诊', '就诊医院']  # 询问就诊地点
         self.querysp_qwds = ['从哪里出发', '从哪来', '从哪出发', '出发地', '境外输入地']  # 询问出发地点
@@ -221,8 +222,8 @@ class EntityExtractor:
                     self.result[self.name_dict[index]] = [word]
                 else:
                     self.result[self.name_dict[index]].append(word)
-        if len(self.result['Disease']) > 1:
-            self.result['Disease'] = self.result['Disease'][0]
+        # if len(self.result['Disease']) > 1:
+        #     self.result['Disease'] = self.result['Disease'][0]
 
         return self.result
 
@@ -270,7 +271,7 @@ class EntityExtractor:
             if r in text:
                 features[5] += 1
 
-        for d in self.self.route_qwds:
+        for d in self.route_qwds:
             if d in text:
                 features[6] += 1
 
@@ -359,6 +360,12 @@ class EntityExtractor:
         # 查询属于
         if self.check_words(self.belong_qwds, question) and ('Disease' in types or 'Alia' in types):
             intention = "query_belong"
+            if intention not in intentions:
+                intentions.append(intention)
+
+        # 查询疾病基本信息
+        if self.check_words(self.cov_qwds, question) and ('Disease' in types or 'Alia' in types):
+            intention = "query_cov"
             if intention not in intentions:
                 intentions.append(intention)
 
