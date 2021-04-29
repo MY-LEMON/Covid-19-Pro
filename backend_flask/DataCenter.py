@@ -6,7 +6,6 @@ import time
 import os
 
 
-
 class GetData:
     def __init__(self):
         self.url = "https://lab.isaaclin.cn/nCoV/"  # 原网址
@@ -17,11 +16,14 @@ class GetData:
         self.res = ''
         self.data = ''
 
-        self.data_dict = {}
         self.data_china = []
-        self.data_province = []
+        self.data_province = {}
 
         self.load_data()
+        self.get_china_data()
+        self.get_province_data()
+
+        self.data_dict = {"China": self.data_china, "Provinces": self.data_province}
 
     def load_data(self):
         if not os.path.exists("./data_covid19/" + time.strftime("%Y%m%d", time.localtime()) + "data.json"):
@@ -36,34 +38,34 @@ class GetData:
                 self.data_dict = json.load(load_f)
 
     def get_china_data(self):
-        # self.data_dict = json.loads(self.data)
-        data_china = []
+        china = []
 
-        for city in self.data_dict['results']:
+        for pro in self.data_dict['results']:
             city_data = {'name': '', 'value': []}
-            if city['countryName'] == '中国':
-                data_china.append(city)
-                city_data['name'] = city['provinceShortName']
-                city_data['value'] = [city['confirmedCount'], city['suspectedCount'], city['curedCount'],
-                                      city['deadCount'], city['currentConfirmedCount']]
+            if pro['countryName'] == '中国':
+                china.append(pro)
+                city_data['name'] = pro['provinceShortName']
+                city_data['value'] = [pro['confirmedCount'], pro['suspectedCount'], pro['curedCount'],
+                                      pro['deadCount'], pro['currentConfirmedCount']]
                 self.data_china.append(city_data)
 
         return self.data_china
 
     def get_province_data(self):
-        self.data_dict = json.loads(self.data)
-        data_province = []
+        province = []
 
-        for city in self.data_dict['results']:
-            city_data = {'name': '', 'value': []}
-            if city['countryName'] == '中国':
-                data_province.append(city)
-                city_data['name'] = city['provinceShortName']
-                city_data['value'] = [city['confirmedCount'], city['suspectedCount'], city['curedCount'],
-                                      city['deadCount'], city['currentConfirmedCount']]
-                self.data_china.append(city_data)
+        for pro in self.data_dict['results']:
+            if pro['countryName'] == '中国' and pro['provinceName'] != '中国':
+                province.append(pro)
+                self.data_province[pro['provinceEnglishName']] = []
+                for city in pro['cities']:
+                    city_data = {'name': '', 'value': []}
+                    city_data['name'] = city['cityName']
+                    city_data['value'] = [city['confirmedCount'], city['suspectedCount'], city['curedCount'],
+                                          city['deadCount'], city['currentConfirmedCount']]
+                    self.data_province[pro['provinceEnglishName']].append(city_data)
 
-        return self.data_china
+        return self.data_province
 
 
 class CsvData:
@@ -114,8 +116,7 @@ class CsvData:
 if __name__ == "__main__":
     # print(os.path.exists('./data_covid19/app.py'))
     get_data = GetData()
-    data = get_data.get_china_data()
-    print(data)
+    print(get_data.data_dict)
     # get_data = CsvData()
     # data = get_data.vaccinations_data
     # print(data)
