@@ -28,6 +28,6 @@ if __name__ == "__main__":
         if not question:
             break
         final_answer, node_relation = handler.qa_main(question)
-        print(final_answer)
-        print(node_relation)
+        # print(final_answer)
+        # print(node_relation)
         print("——" * 50)

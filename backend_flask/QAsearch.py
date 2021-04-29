@@ -1,5 +1,7 @@
 from settings import *
 from py2neo import Graph, Node, Relationship
+import random
+from settings import NODE_COLORS
 
 
 class CovidGraph:
@@ -68,7 +70,8 @@ class CovidGraph:
                     entity)]
         if intent == "query_route" and label == "Disease_graph":
             sql = [
-                "match (n:entity)-[r:relation]-(p:entity) WHERE n.label_zh=~'新型冠状病毒.*'and r.label_zh=~'.+传播途径' return distinct id(n),properties(n),properties(r),id(p),properties(p)".format(entity)]
+                "match (n:entity)-[r:relation]-(p:entity) WHERE n.label_zh=~'新型冠状病毒.*'and r.label_zh=~'.+传播途径' return distinct id(n),properties(n),properties(r),id(p),properties(p)".format(
+                    entity)]
 
         # 查询治疗方法
         if intent == "query_cureway" and label == "Disease_sent":
@@ -89,14 +92,15 @@ class CovidGraph:
                 "match (n:entity)-[r:relation]->(p:entity)  WHERE n.label_zh='新型冠状病毒肺炎'return id(n),"
                 "properties(n),properties(r),id(p),properties(p)".format(entity)]
 
-                # 查询科室
+            # 查询科室
         if intent == "query_belong" and label == "Disease_sent":
             sql = [
                 "match (n:entity)-[r:relation]->(p:entity) WHERE r.label_zh='医学专科' and n.label_zh = '{}' return distinct n.label_zh,p.label_zh".format(
                     entity)]
         if intent == "query_belong" and label == "Disease_graph":
             sql = [
-                "match (n:entity)-[r:relation]->(p:entity) WHERE r.label_zh='医学专科' and n.label_zh = '{}' return distinct id(n),properties(n),properties(r),id(p),properties(p)".format(entity)]
+                "match (n:entity)-[r:relation]->(p:entity) WHERE r.label_zh='医学专科' and n.label_zh = '{}' return distinct id(n),properties(n),properties(r),id(p),properties(p)".format(
+                    entity)]
 
         # 查询预防方法
         if intent == "query_prevent" and label == "Disease_sent":
@@ -106,7 +110,6 @@ class CovidGraph:
         if intent == "query_prevent" and label == "Disease_graph":
             sql = [
                 "".format(entity)]
-
 
         # 查询就诊医院
         if intent == "query_hospital" and label == "infectorname_sent":
@@ -289,6 +292,8 @@ class CovidGraph:
         rootID = resp[0]['id(n)']
         nodes = []
         links = []
+        color_dict = {}
+        color_list = random.sample(NODE_COLORS, len(NODE_COLORS))  # 随机取出一组颜色
         for nrp in iter(resp):
 
             node_a = {'id': '', 'name': '', 'data': {}}
@@ -308,11 +313,29 @@ class CovidGraph:
             link['text'] = nrp['properties(r)']['label_zh']
             link['data'] = nrp['properties(r)']
 
+            if link['text'] not in color_dict:
+                color_dict[link['text']] = [color_list.pop(), link['to']]
+            else:
+                color_dict[link['text']].append(link['to'])  # 根据关系标签标记对应节点颜色
+
             if node_a not in nodes:
                 nodes.append(node_a)
             if node_b not in nodes:
                 nodes.append(node_b)
             links.append(link)
+
+        node2color = {str(rootID): color_list.pop()}
+        for node_type in color_dict:  # key：节点序号，value:颜色
+            color = color_dict[node_type][0]
+            for i in range(1, len(color_dict[node_type])):
+                node2color[color_dict[node_type][i]] = color
+
+        for node in nodes:
+            try:
+                color = node2color[node['id']]
+                node['color'], node['borderColor'] = color
+            except:
+                pass
 
         import json
         with open("data.json", "w", encoding='utf-8') as f:
