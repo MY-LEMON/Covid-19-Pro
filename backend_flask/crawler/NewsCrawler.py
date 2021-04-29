@@ -3,12 +3,14 @@ from settings import news_html_dir
 from bs4 import BeautifulSoup
 import requests
 import re
+import time
 
 total = 100
 group = 10
 news_title = []
 news_text = []
-today = '2021.4.27'
+today = time.strftime("%Y.%m.%d", time.localtime())
+
 
 
 def newsUrl(url):
