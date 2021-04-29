@@ -62,5 +62,5 @@ class News(object):
 
 if __name__ == "__main__":
     news = News()
-    # print(news.insert_news())
+    print(news.insert_news())
     print(news.get_news_limit(10))
