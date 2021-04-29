@@ -34,6 +34,14 @@ echarts：绘制图表，如新冠地图，确诊人数。。。
 
 relation-graph：知识图谱关系图绘制
 
+依赖安装：
+
+npm install sass-loader@10.1.1
+
+（不能直接安装，需低版本）
+
+npm install --save relation-graph
+
 axios：HTTP库
 
 

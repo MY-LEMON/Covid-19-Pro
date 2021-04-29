@@ -8,7 +8,7 @@ class KGQA:
         self.searcher = CovidGraph()
 
     def qa_main(self, input_str):
-        answer = "对不起，您的问题我不知道，我今后会努力改进的。"
+        answer = "对不起，此问题我正在学习中。"
         entities = self.extractor.extractor(input_str)
         if not entities:
             return answer
@@ -28,4 +28,6 @@ if __name__ == "__main__":
         if not question:
             break
         final_answer, node_relation = handler.qa_main(question)
-        print("*" * 50)
+        # print(final_answer)
+        # print(node_relation)
+        print("——" * 50)

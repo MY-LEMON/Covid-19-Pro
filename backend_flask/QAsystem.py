@@ -12,6 +12,8 @@ class EntityExtractor:
     def __init__(self):
 
         self.result = {}
+        self.name_dict = ["Disease", "Alias", "Symptom", "Complication", "infectorname", "place", "date", "transport",
+                          "hospital", "type"]
 
         # 所有词汇导入
         self.disease_path = data_dir + 'disease_vocab.txt'  # 所有疾病词汇
@@ -19,17 +21,38 @@ class EntityExtractor:
         self.alias_path = data_dir + 'alias_vocab.txt'
         self.complication_path = data_dir + 'complications_vocab.txt'
 
+        self.infectorname_path = data_dir + 'gz_病例.txt'
+        self.place_path = data_dir + 'gz_地点.txt'
+        self.date_path = data_dir + 'gz_日期.txt'
+        self.transport_path = data_dir + 'gz_入境方式.txt'
+        self.hospital_path = data_dir + 'gz_医院.txt'
+        self.type_path = data_dir + 'gz_症状.txt'
+
         # 构建领域词词库
         self.disease_entities = [w.strip() for w in open(self.disease_path, encoding='utf8') if w.strip()]
         self.symptom_entities = [w.strip() for w in open(self.symptom_path, encoding='utf8') if w.strip()]
         self.alias_entities = [w.strip() for w in open(self.alias_path, encoding='utf8') if w.strip()]
         self.complication_entities = [w.strip() for w in open(self.complication_path, encoding='utf8') if w.strip()]
 
+        self.infectorname_entities = [w.strip() for w in open(self.infectorname_path, encoding='utf8') if w.strip()]
+        self.place_entities = [w.strip() for w in open(self.place_path, encoding='utf8') if w.strip()]
+        self.date_entities = [w.strip() for w in open(self.date_path, encoding='utf8') if w.strip()]
+        self.transport_entities = [w.strip() for w in open(self.transport_path, encoding='utf8') if w.strip()]
+        self.hospital_entities = [w.strip() for w in open(self.hospital_path, encoding='utf8') if w.strip()]
+        self.type_entities = [w.strip() for w in open(self.type_path, encoding='utf8') if w.strip()]
+
         # 构建ac树加快查询
         self.disease_tree = self.build_actree(list(set(self.disease_entities)))
         self.alias_tree = self.build_actree(list(set(self.alias_entities)))
         self.symptom_tree = self.build_actree(list(set(self.symptom_entities)))
         self.complication_tree = self.build_actree(list(set(self.complication_entities)))
+
+        self.infectorname_tree = self.build_actree(list(set(self.infectorname_entities)))
+        self.place_tree = self.build_actree(list(set(self.place_entities)))
+        self.date_tree = self.build_actree(list(set(self.date_entities)))
+        self.transport_tree = self.build_actree(list(set(self.transport_entities)))
+        self.hospital_tree = self.build_actree(list(set(self.hospital_entities)))
+        self.type_tree = self.build_actree(list(set(self.type_entities)))
 
         # 训练模型
         self.vocab_path = data_dir + 'vocab.txt'  # 所有词汇
@@ -62,7 +85,20 @@ class EntityExtractor:
         self.belong_qwds = ['属于什么科', '什么科', '科室', '挂什么', '挂哪个', '哪个科', '哪些科']  # 询问科室
         self.disase_qwds = ['什么病', '啥病', '得了什么', '得了哪种', '怎么回事', '咋回事', '回事',
                             '什么情况', '什么问题', '什么毛病', '啥毛病', '哪种病']  # 询问疾病
-        self.dirtywords_qwds = ['傻逼', '臭傻逼']
+        self.prevent_qwds = ['预防', '防治', '预防方法', '什么方法', '怎么预防', '怎么防治', '预防措施', '防治措施', '如何预防',
+                             '如何防治', '怎样预防', '咋预防', '咋防治']
+        self.route_qwds = ['传播途径', '途径', '方式', '怎么传播', '传播', '传播方式', '如何传播', '什么方式传播', '什么途径', '什么方式']
+        self.cov_qwds = ['新型冠状病毒肺炎是什么', '新型冠状病毒肺炎是啥', '介绍新型冠状病毒肺炎', '了解新型冠状病毒肺炎']
+
+        self.queryhos_qwds = ['哪家医院', '医院', '在哪就医', '送哪个医院', '在哪就诊', '就诊医院']  # 询问就诊地点
+        self.querysp_qwds = ['从哪里出发', '从哪来', '从哪出发', '出发地', '境外输入地']  # 询问出发地点
+        self.queryst_qwds = ['几号启程', '什么时候出发', '什么时候来', '几号的飞机', '什么时候离开', '何时离开']  # 询问出发时间
+        self.queryep_qwds = ['在哪入境', '从哪进来', '在哪确诊', '飞到哪', '在哪']  # 询问入境地点
+        self.queryet_qwds = ['几号到的', '什么时候到的', '何时到达', '何时入境', '什么时候入境', '几号入境']  # 询问入境时间
+        self.querydef_qwds = ['有哪些确诊病例', '确诊的都有谁', '确诊了哪些人', '哪些病例被确诊']  # 询问确诊病例
+        self.queryns_qwds = ['有哪些无症状感染者', '无症状感染者有哪些', '有哪些人被检测成无症状', '谁是无症状感染者']  # 询问无症状感染者
+        self.queryway_qwsd = ['交通工具', '怎么进来', '如何入境', '何种方式入境', '航班号', '入境途径']  # 询问病例入境方式
+        self.queryna_qwsd = ['是哪的人', '籍贯', '什么地方的人', '病例老家是哪', '哪里人']  # 询问病例籍贯
 
     def build_actree(self, wordlist):
         """
@@ -175,33 +211,19 @@ class EntityExtractor:
             self.result[temp1[0][2]] = [temp1[0][0]]
 
     def entity_reg(self, question):
-        for i in self.disease_tree.iter(question):
-            word = i[1][1]
-            if "Disease" not in self.result:
-                self.result["Disease"] = [word]
-            else:
-                self.result["Disease"].append(word)
 
-        for i in self.alias_tree.iter(question):
-            word = i[1][1]
-            if "Alias" not in self.result:
-                self.result["Alias"] = [word]
-            else:
-                self.result["Alias"].append(word)
-
-        for i in self.symptom_tree.iter(question):
-            wd = i[1][1]
-            if "Symptom" not in self.result:
-                self.result["Symptom"] = [wd]
-            else:
-                self.result["Symptom"].append(wd)
-
-        for i in self.complication_tree.iter(question):
-            wd = i[1][1]
-            if "Complication" not in self.result:
-                self.result["Complication"] = [wd]
-            else:
-                self.result["Complication"].append(wd)
+        ac_tree = [self.disease_tree, self.alias_tree, self.symptom_tree, self.complication_tree,
+                   self.infectorname_tree, self.place_tree, self.date_tree, self.transport_tree, self.hospital_tree,
+                   self.type_tree]
+        for index in range(len(self.name_dict)):
+            for i in ac_tree[index].iter(question):
+                word = i[1][1]
+                if self.name_dict[index] not in self.result:
+                    self.result[self.name_dict[index]] = [word]
+                else:
+                    self.result[self.name_dict[index]].append(word)
+        # if len(self.result['Disease']) > 1:
+        #     self.result['Disease'] = self.result['Disease'][0]
 
         return self.result
 
@@ -249,7 +271,7 @@ class EntityExtractor:
             if r in text:
                 features[5] += 1
 
-        for d in self.belong_qwds:
+        for d in self.route_qwds:
             if d in text:
                 features[6] += 1
 
@@ -289,8 +311,8 @@ class EntityExtractor:
 
     def extractor(self, question):
         self.entity_reg(question)
-        if not self.result:
-            self.find_sim_words(question)
+        # if not self.result:
+        #     self.find_sim_words(question)
 
         types = []  # 实体类型
         for v in self.result.keys():
@@ -308,7 +330,7 @@ class EntityExtractor:
         predicted = self.model_predict(feature, self.nb_model)
         intentions.append(predicted[0])
 
-        # # 预测失败时删除错误结果，防止意图混淆
+        # 预测失败时删除错误结果，防止意图混淆
         intentions.clear()
 
         # 已知疾病，查询症状
@@ -317,10 +339,54 @@ class EntityExtractor:
             if intention not in intentions:
                 intentions.append(intention)
 
-        if self.check_words(self.dirtywords_qwds, question) and ('Disease' in types or 'Alia' in types):
-            intention = "query_dirtywords"
+        # 查询预防
+        if self.check_words(self.prevent_qwds, question) and ('Disease' in types or 'Alia' in types):
+            intention = "query_prevent"
             if intention not in intentions:
                 intentions.append(intention)
+
+        # 查询路线
+        if self.check_words(self.route_qwds, question) and ('Disease' in types or 'Alia' in types):
+            intention = "query_route"
+            if intention not in intentions:
+                intentions.append(intention)
+
+        # 查询治疗方式
+        if self.check_words(self.cureway_qwds, question) and ('Disease' in types or 'Alia' in types):
+            intention = "query_cureway"
+            if intention not in intentions:
+                intentions.append(intention)
+
+        # 查询属于
+        if self.check_words(self.belong_qwds, question) and ('Disease' in types or 'Alia' in types):
+            intention = "query_belong"
+            if intention not in intentions:
+                intentions.append(intention)
+
+        # 查询疾病基本信息
+        if self.check_words(self.cov_qwds, question) and ('Disease' in types or 'Alia' in types):
+            intention = "query_cov"
+            if intention not in intentions:
+                intentions.append(intention)
+
+        # 查询医院就诊
+        if self.check_words(self.queryhos_qwds, question) and ('infectorname' in types):
+            intention = "query_hospital"
+            if intention not in intentions:
+                intentions.append(intention)
+
+        # 查询出发地
+        if self.check_words(self.querysp_qwds, question) and ('infectorname' in types):
+            intention = "query_sp"
+            if intention not in intentions:
+                intentions.append(intention)
+
+        # 查询出发日期
+        if self.check_words(self.querydef_qwds, question) and ('date' in types):
+            intention = "query_def"
+            if intention not in intentions:
+                intentions.append(intention)
+
 
         """
         more

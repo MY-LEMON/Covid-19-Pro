@@ -1,6 +1,7 @@
 <template>
-  <div id="app" style=" height: 100%;width: 100%">
+  <div id="app">
     <eheader></eheader>
+    <Kgraph></Kgraph>
     <router-view></router-view>
   </div>
 </template>
@@ -14,15 +15,23 @@
   color: #2c3e50;
 }
 
+#nav {
+  padding: 30px;
+}
+
 #nav a {
   font-weight: bold;
   color: #2c3e50;
 }
 
+#nav a.router-link-exact-active {
+  color: #42b983;
+}
 </style>
 <script>
 import Eheader from './components/eheader'
+import Kgraph from "./components/kgraph";
 export default {
-  components: { Eheader }
+  components: {Kgraph, Eheader }
 }
 </script>
