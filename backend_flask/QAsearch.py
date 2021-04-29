@@ -79,7 +79,17 @@ class CovidGraph:
             sql = [
                 "".format(entity)]
 
-        # 查询科室
+        # 查询新冠是什么
+        if intent == "query_cov" and label == "Disease_sent":
+            sql = [
+                "match (n:entity)-[r:relation]-(p:entity)  WHERE n.label_zh='新型冠状病毒肺炎' return distinct properties(n)".format(
+                    entity)]
+        if intent == "query_cov" and label == "Disease_graph":
+            sql = [
+                "match (n:entity)-[r:relation]->(p:entity)  WHERE n.label_zh='新型冠状病毒肺炎'return id(n),"
+                "properties(n),properties(r),id(p),properties(p)".format(entity)]
+
+                # 查询科室
         if intent == "query_belong" and label == "Disease_sent":
             sql = [
                 "match (n:entity)-[r:relation]->(p:entity) WHERE r.label_zh='医学专科' and n.label_zh = '{}' return distinct n.label_zh,p.label_zh".format(
@@ -88,14 +98,15 @@ class CovidGraph:
             sql = [
                 "match (n:entity)-[r:relation]->(p:entity) WHERE r.label_zh='医学专科' and n.label_zh = '{}' return distinct id(n),properties(n),properties(r),id(p),properties(p)".format(entity)]
 
-            # 查询预防方法
-            if intent == "query_prevent" and label == "Disease_sent":
-                sql = [
-                    "match (n:entity)WHERE exists (n.`预防`) and n.label_zh='{}' return distinct n.label_zh,n.`预防` AS `prevention`".format(
-                        entity)]
-            if intent == "query_prevent" and label == "Disease_graph":
-                sql = [
-                    "".format(entity)]
+        # 查询预防方法
+        if intent == "query_prevent" and label == "Disease_sent":
+            sql = [
+                "match (n:entity)WHERE exists (n.`预防`) and n.label_zh='{}' return distinct n.label_zh,n.`预防` AS `prevention`".format(
+                    entity)]
+        if intent == "query_prevent" and label == "Disease_graph":
+            sql = [
+                "".format(entity)]
+
 
         # 查询就诊医院
         if intent == "query_hospital" and label == "infectorname_sent":
@@ -148,9 +159,9 @@ class CovidGraph:
             for query in queries_graph:
                 resp = self.graph.run(query).data()
                 print(resp)
-                # if resp:
-                #     data_json = self.data2json(resp)
-                #     node_relation.append(data_json)
+                if resp:
+                    data_json = self.data2json(resp)
+                    node_relation.append(data_json)
 
         return final_answers, node_relation
 
@@ -224,6 +235,16 @@ class CovidGraph:
                     disease_dic[n].append(p)
             for k, v in disease_dic.items():
                 final_answer += "疾病 {0} 的预防方法是：{1}\n".format(k, ','.join(list(set(v))))
+
+        if intent == "query_cov":
+            print(answers[0]['properties(n)']['症状'])
+            n = [answers[0]['properties(n)']['症状'], answers[0]['properties(n)']['潜伏期'],
+                 answers[0]['properties(n)']['转运原则'], answers[0]['properties(n)']['临床表现'],
+                 answers[0]['properties(n)']['解除隔离和出院标准'], answers[0]['properties(n)']['临床治疗期重症期表现']]
+            final_answer = "新型冠状病毒肺炎有以下特征:\n症状：{0}\n潜伏期：{1}\n转运原则:{2}\n临床表现：{3}\n解除隔离和出院标准:\n{4}\n临床治疗期重症期表现:{5}".format(
+                n[0],
+                n[1], n[2], n[3], n[4], n[5])
+            # print(final_answer)
 
         if intent == "query_hospital":
             hospital_dic = {}
