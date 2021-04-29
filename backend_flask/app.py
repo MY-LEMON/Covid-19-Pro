@@ -7,7 +7,8 @@ import time
 import random
 from QAmain import KGQA
 from NewsCenter import News
-
+from DataCenter import GetData
+from SelfCheck import judge
 """
 接口说明：
 1.返回的是json数据
@@ -50,9 +51,36 @@ def aaa():
     return 'hello'
 
 
-@app.route('/index')
-def bbb():
-    return jsonify('world', methods=['POST'])
+@app.route('/index',methods=['POST', 'GET'])
+def covid_data():
+    if request.method == 'GET':
+        cov_data = GetData()
+        data = cov_data.get_china_data()
+        resData = {
+            "resCode": 0,  # 非0即错误 1
+            "data": data,  # 数据位置，一般为数组
+            "message": '新闻结果'
+        }
+        print(jsonify(resData))
+        return jsonify(resData)
+
+
+@app.route("/submit", methods=["GET", "POST"])
+def submit():  # 获取自检数据及提交
+    # 由于POST、GET获取数据的方式不同，需要使用if语句进行判断
+    if request.method == "POST":
+        self_test = request.form.get("self_test",type=str)  # 一个数组？
+    if request.method == "GET":
+        self_test = request.form.get("self_test",type=str)
+    print(self_test)
+    print(str(self_test))
+    self_test = str(self_test).strip().split(',')
+    print(self_test)
+    self_test = [ int(i) for i in self_test]
+
+    result1 = judge(self_test)  # 根据结果显示相应内容
+    return {'message': "success!", 'result1': result1}
+
 
 
 @app.route('/search', methods=['POST', 'GET'])
@@ -116,6 +144,7 @@ def news_view():
             "message": '请求方法错误'
         }
         return jsonify(resData)
+
 
 
 if __name__ == '__main__':
