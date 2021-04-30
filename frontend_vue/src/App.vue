@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <eheader></eheader>
-    <Kgraph></Kgraph>
+<!--    <Kgraph></Kgraph>-->
     <router-view></router-view>
   </div>
 </template>
@@ -30,8 +30,8 @@
 </style>
 <script>
 import Eheader from './components/eheader'
-import Kgraph from "./components/kgraph";
+// import Kgraph from "./components/kgraph";
 export default {
-  components: {Kgraph, Eheader }
+  components: { Eheader }
 }
 </script>

@@ -54,8 +54,8 @@ export default {
   },
   methods: {
     getdata(){
-      doSearch('/News').then(resp=>{
-        // console.log(resp.data.data);
+      doSearch('https://bdc51f09-c370-4318-9d0d-5cacb9fa267f.mock.pstmn.io/News').then(resp=>{
+        console.log(resp.data);
         for (let i = 0; i < resp.data.data.length; i++) {
           var temp = resp.data.data[i];
           temp.id += this.data.length;

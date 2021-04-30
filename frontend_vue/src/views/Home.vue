@@ -1,5 +1,6 @@
 <template>
   <div class="home">
+<!--    <Kgraph></Kgraph>-->
     <p>Home {{item}}</p><br>
     <el-button type="primary" @click="search('qna')">主要按钮</el-button>
   </div>
@@ -8,6 +9,7 @@
 <script>
 // @ is an alias to /src
 import {doSearch} from '../apis/search.js'
+// import Kgraph from "./components/kgraph";
 export default {
   name: 'Home',
   data(){
@@ -17,6 +19,7 @@ export default {
     }
   },
   components: {
+    // Kgraph
   },
   methods: {
     search(key){
