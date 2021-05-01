@@ -10,15 +10,16 @@
 
 
         <el-col :span="12" :offset="4">
-          <div >
+          <el-link :href="i.src" >
               <p>{{i.abstract}}</p>
-          </div>
+          </el-link>
         </el-col>
         <el-col :span="4" >
           <div >
             <el-image
-              style="width: 100px; height: 100px"
+              style=" height: 100px"
               :src=i.imgs[0]
+              fit= contain
               ></el-image>
           </div>
         </el-col>
@@ -34,12 +35,15 @@
 </template>
 
 <script>
-import {doSearch} from '../apis/search.js'
+// import {doSearch} from '../apis/search.js'
+import axios from "axios";
+
 export default {
   data () {
     return {
-      index:0,
+
       count: 0,
+      num:5,
       loading: false,
       data:[]
     }
@@ -54,14 +58,19 @@ export default {
   },
   methods: {
     getdata(){
-      doSearch('https://bdc51f09-c370-4318-9d0d-5cacb9fa267f.mock.pstmn.io/News').then(resp=>{
+      axios.get('http://172.22.69.121:5000/news',{
+        params:{
+          "from":this.count,
+          "to":this.count+this.num
+        }
+      }).then(resp=>{
         console.log(resp.data);
         for (let i = 0; i < resp.data.data.length; i++) {
           var temp = resp.data.data[i];
           temp.id += this.data.length;
           this.data.push(temp);
         }
-        this.count += 3
+        this.count += resp.data.data.length
       });
       // console.log(this);
     },
