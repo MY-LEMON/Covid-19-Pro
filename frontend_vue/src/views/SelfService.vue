@@ -41,6 +41,8 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "SelfService",
   data(){
@@ -51,7 +53,14 @@ export default {
   },
   methods:{
     submit(){
-      console.log(this.radio)
+      this.checkList.push(this.radio)
+      axios.get("/selfservice",{
+      params :{
+        "self_test":this.checkList.toString()
+      }
+      }).then(ans=>{
+        alert(ans)
+      })
     }
   }
 }
