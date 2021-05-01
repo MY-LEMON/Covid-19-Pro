@@ -22,9 +22,7 @@
 <!--            {{ node.data['症状'] }}-->
 <!--          </div>-->
         </div>
-        <div slot="bottomPanel" style="border-top:#efefef solid 1px;height:60px;line-height: 60px;text-align: center;font-size: 18px;background-color: #ffffff;">
-          知识图谱与精准问答
-        </div>
+
       </SeeksRelationGraph>
     </div>
     <div v-if="isShowNodeTipsPanel" :style="{left: nodeMenuPanelPosition.x + 'px', top: nodeMenuPanelPosition.y + 'px' }" style="z-index: 999;padding:10px;background-color: #ffffff;border:#eeeeee solid 1px;box-shadow: 0px 0px 8px #cccccc;position: absolute;">
