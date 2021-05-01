@@ -22,7 +22,7 @@ export default {
   name: "test",
   props:{
     china:{
-      type: Object,
+      type: Array,
       require: true
     },
     province:{
