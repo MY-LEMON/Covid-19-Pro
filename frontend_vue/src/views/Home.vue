@@ -1,33 +1,46 @@
 <template>
-  <div class="home">
-<!--    <Kgraph></Kgraph>-->
-    <p>Home {{item}}</p><br>
-    <el-button type="primary" @click="search('qna')">主要按钮</el-button>
-  </div>
+  <el-container>
+
+      <el-aside>
+
+      </el-aside>
+      <el-main v-if="this.mapisloaded">
+        <map-china v-bind:china="chinadata" v-bind:province="provincedata"></map-china>
+      </el-main>
+
+  </el-container>
 </template>
 
 <script>
 // @ is an alias to /src
-import {doSearch} from '../apis/search.js'
+// import {doSearch} from '../apis/search.js'
 // import Kgraph from "./components/kgraph";
+import mapChina from "@/components/mapChina.vue";
+import axios from "axios";
 export default {
   name: 'Home',
   data(){
     return{
-      a : '1',
-      item: []
+      chinadata:{},
+      provincedata:{},
+      mapisloaded:false
     }
   },
   components: {
-    // Kgraph
+    mapChina
+  },
+  mounted() {
+  axios.get("http://172.22.69.121:5000/").then(resp=>{
+    this.chinadata = resp.data.data["China"]
+    this.provincedata = resp.data.data["Provinces"]
+    this.mapisloaded = true
+  })
   },
   methods: {
-    search(key){
-      doSearch(key).then(resp=>{
-        this.item = 'done'
-        console.log(resp.data)
-      })
-    }
+
   }
 }
 </script>
+<style>
+
+</style>
