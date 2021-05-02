@@ -4,7 +4,7 @@
         class="list"
         v-infinite-scroll="load"
         infinite-scroll-disabled="disabled"
-        style="overflow: auto; height: 500px">
+        style="overflow: auto; height: 600px">
 
       <el-row v-for="i in data" :key="i.id" class="list-item">
 
