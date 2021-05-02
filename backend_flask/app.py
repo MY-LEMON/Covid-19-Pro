@@ -7,8 +7,10 @@ import time
 import random
 from QAmain import KGQA
 from NewsCenter import News
-from DataCenter import GetData
+from DataCenter import GetDataApi
 from SelfCheck import judge
+from flask_cors import CORS
+
 """
 接口说明：
 1.返回的是json数据
@@ -22,6 +24,7 @@ from SelfCheck import judge
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
+CORS(app, resources=r'/*')
 
 
 # 检查是否含有特殊字符
@@ -48,13 +51,20 @@ def handler_404_error(err):
 # 主页面
 @app.route('/', methods=['GET', 'POST'])
 def aaa():
-    return 'hello'
+    if request.method == 'GET':
+        get_data = GetDataApi()
+        resData = {
+            "resCode": 0,  # 非0即错误 1
+            "data": get_data.dict2front,  # 数据位置，一般为数组
+            "message": '搜索结果'
+        }
+        return jsonify(resData)
 
 
-@app.route('/index',methods=['POST', 'GET'])
+@app.route('/index', methods=['POST', 'GET'])
 def covid_data():
     if request.method == 'GET':
-        cov_data = GetData()
+        cov_data = GetDataApi()
         data = cov_data.get_china_data()
         resData = {
             "resCode": 0,  # 非0即错误 1
@@ -69,26 +79,23 @@ def covid_data():
 def submit():  # 获取自检数据及提交
     # 由于POST、GET获取数据的方式不同，需要使用if语句进行判断
     if request.method == "POST":
-        self_test = request.form.get("self_test",type=str)  # 一个数组？
-    if request.method == "GET":
-        self_test = request.form.get("self_test",type=str)
+        self_test = request.form.get("self_test", type=str)  # 一个数组？
+    elif request.method == "GET":
+        self_test = request.form.get("self_test", type=str)
     print(self_test)
     print(str(self_test))
     self_test = str(self_test).strip().split(',')
     print(self_test)
-    self_test = [ int(i) for i in self_test]
+    self_test = [int(i) for i in self_test]
 
     result1 = judge(self_test)  # 根据结果显示相应内容
     return {'message': "success!", 'result1': result1}
 
 
-
 @app.route('/search', methods=['POST', 'GET'])
 def search_kg():
-    if request.method == 'POST':
-        get_data = json.loads(request.get_data(as_text=True))
-        key = get_data['key']
-
+    if request.method == 'GET':
+        key = request.values.get("key")
         print(key)
         if is_string_validate(key):
             resData = {
@@ -100,11 +107,11 @@ def search_kg():
 
         handler = KGQA()
         final_answer, node_relation = handler.qa_main(key)
-        if len(final_answer) == 0:
+        if len(final_answer[0]) == 0:
             resData = {
                 "resCode": 0,  # 非0即错误 1
-                "data": [],  # 数据位置，一般为数组
-                "message": '数据为空'
+                "data": [final_answer[0], node_relation[0]],  # 数据位置，一般为数组
+                "message": '数据为空,搜索失败'
             }
             return jsonify(resData)
 
@@ -128,9 +135,14 @@ def search_kg():
 @app.route('/news', methods=['POST', 'GET'])
 def news_view():
     if request.method == 'GET':
+        # get_data = json.loads(request.get_data(as_text=True))
+        from_key = int(request.values.get("from"))
+        to_key = int(request.values.get("to"))
         new = News()
-        n = 3
-        news_data = new.get_news_limit(n)
+        total = to_key - from_key
+        from_key = from_key % new.db_sum       # 如果新闻不够，则从头查询
+        to_key = from_key + total
+        news_data = new.get_news_limit(from_key, to_key)
         resData = {
             "resCode": 0,  # 非0即错误 1
             "data": news_data,  # 数据位置，一般为数组
@@ -147,8 +159,7 @@ def news_view():
         return jsonify(resData)
 
 
-
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=1943, debug=True)
-    # app.run(host="0.0.0.0", port=5000, debug=True)
+    # app.run(host='127.0.0.1', port=1943, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
     # app.run()

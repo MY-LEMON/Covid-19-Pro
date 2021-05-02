@@ -114,26 +114,34 @@ class CovidGraph:
         # 查询就诊医院
         if intent == "query_hospital" and label == "infectorname_sent":
             sql = [
-                "match (n:`病例`)-[r:`就诊`]-(p:`医院`) where n.`名称`='{0}' return n.名称,p.名称".format(entities[-1])]
+                "match (n:`病例`)-[r:`就诊`]-(p:`医院`) where n.`label_zh`='{0}' return n.label_zh,p.label_zh".format(
+                    entities[-1])]
         if intent == "query_hospital" and label == "infectorname_graph":
             sql = [
-                "match (n:`病例`)-[r:`就诊`]-(p:`医院`) where n.`名称`='{0}' return n.名称,p.名称".format(entities[-1])]
+                "match (n:`病例`)-[r:`就诊`]-(p:`医院`) where n.`label_zh`='{0}' return return id(n),"
+                "properties(n),properties(r),id(p),properties(p)".format(
+                    entities[-1])]
 
         # 查询出发地
         if intent == "query_sp" and label == "infectorname_sent":
             sql = [
-                "match (n:`病例`)-[r:`出发地点`]-(p:`地点`) where n.`名称`='{0}' return n.名称,p.名称".format(entities[-1])]
-        if intent == "query_hospital" and label == "infectorname_graph":
+                "match (n:`病例`)-[r:`出发地点`]-(p:`地点`) where n.`label_zh`='{0}' return n.label_zh,p.label_zh".format(
+                    entities[-1])]
+        if intent == "query_sp" and label == "infectorname_graph":
             sql = [
-                "match (n:`病例`)-[r:`出发地点`]-(p:`地点`) where n.`名称`='{0}' return n.名称,p.名称".format(entities[-1])]
+                "match (n:`病例`)-[r:`出发地点`]-(p:`地点`) where n.`label_zh`='{0}' return id(n),"
+                "properties(n),properties(r),id(p),properties(p)".format(entities[-1])]
 
         # 查询某天确诊人数
         if intent == "query_def" and label == "date_sent":
             sql = [
-                "match (n:`病例`)-[r:`境外输入无症状感染者`]-(p:`日期`) where p.`名称`='2月21日' return n.名称,p.名称".format(entities[-1])]
-        if intent == "query_hospital" and label == "infectorname_graph":
+                "match (n:`病例`)-[r:`境外输入无症状感染者`]-(p:`日期`) where p.`label_zh`='{0}' return n.label_zh,p.label_zh".format(
+                    entities[-1])]
+        if intent == "query_def" and label == "date_graph":
             sql = [
-                "match (n:`病例`)-[r:`境外输入无症状感染者`]-(p:`日期`) where p.`名称`='2月21日' return n.名称,p.名称".format(entities[-1])]
+                "match (n:`病例`)-[r:`境外输入无症状感染者`]-(p:`日期`) where p.`label_zh`='{0}' return id(n),"
+                "properties(n),properties(r),id(p),properties(p)".format(
+                    entities[-1])]
 
         print(sql, "*********this is sql 函数trans********")
         return sql
@@ -240,7 +248,7 @@ class CovidGraph:
                 final_answer += "疾病 {0} 的预防方法是：{1}\n".format(k, ','.join(list(set(v))))
 
         if intent == "query_cov":
-            print(answers[0]['properties(n)']['症状'])
+            # print(answers[0]['properties(n)']['症状'])
             n = [answers[0]['properties(n)']['症状'], answers[0]['properties(n)']['潜伏期'],
                  answers[0]['properties(n)']['转运原则'], answers[0]['properties(n)']['临床表现'],
                  answers[0]['properties(n)']['解除隔离和出院标准'], answers[0]['properties(n)']['临床治疗期重症期表现']]
@@ -252,8 +260,8 @@ class CovidGraph:
         if intent == "query_hospital":
             hospital_dic = {}
             for data in answers:
-                n = data['n.名称']
-                p = data['p.名称']
+                n = data['n.label_zh']
+                p = data['p.label_zh']
                 if n not in hospital_dic:
                     hospital_dic[n] = [p]
                 else:
@@ -264,8 +272,8 @@ class CovidGraph:
         if intent == "query_sp":
             sp_dic = {}
             for data in answers:
-                n = data['n.名称']
-                p = data['p.名称']
+                n = data['n.label_zh']
+                p = data['p.label_zh']
                 if n not in sp_dic:
                     sp_dic[n] = [p]
                 else:
@@ -276,8 +284,8 @@ class CovidGraph:
         if intent == "query_def":
             def_dic = {}
             for data in answers:
-                n = data['n.名称']
-                p = data['p.名称']
+                n = data['n.label_zh']
+                p = data['p.label_zh']
                 if p not in def_dic:
                     def_dic[p] = [n]
                 else:
@@ -333,12 +341,12 @@ class CovidGraph:
         for node in nodes:
             try:
                 color = node2color[node['id']]
-                node['color'], node['borderColor'] = color
+                node['borderColor'], node['color'] = color
             except:
                 pass
 
-        import json
-        with open("data.json", "w", encoding='utf-8') as f:
-            json.dump({'rootId': str(rootID), 'nodes': nodes, 'links': links}, f, ensure_ascii=False)
+        # import json
+        # with open("data.json", "w", encoding='utf-8') as f:
+        #     json.dump({'rootId': str(rootID), 'nodes': nodes, 'links': links}, f, ensure_ascii=False)
 
         return {'rootId': str(rootID), 'nodes': nodes, 'links': links}
