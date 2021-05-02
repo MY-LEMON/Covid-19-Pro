@@ -50,7 +50,7 @@ export default {
   },
   computed: {
     noMore () {
-      return this.count >= 10
+      return false
     },
     disabled () {
       return this.loading || this.noMore
