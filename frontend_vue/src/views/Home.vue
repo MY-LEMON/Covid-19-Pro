@@ -1,20 +1,26 @@
 <template>
   <el-container>
 
-      <el-aside>
-
-      </el-aside>
       <el-main v-if="this.mapisloaded">
-        <el-row >
-          <map-china v-bind:china="chinadata" v-bind:province="provincedata"></map-china>
+        <el-row class="mainbox">
+          <el-col :span="6" class="leftbox">
 
+              <pie-chart v-bind:resq="provincePieData" style="width: 100%;"></pie-chart>
+
+          </el-col>
+          <el-col :span="12" class="middlebox">
+
+          <map-china v-bind:china="chinadata" v-bind:province="provincedata" style="width: 100%;"></map-china>
+
+          </el-col>
+          <el-col :span="6" class="rightbox" >
+
+              <piechart_foreign v-bind:resq="countryPieData" style="width: 100%;"></piechart_foreign>
+
+          </el-col>
         </el-row>
-        <el-row>
-          <pie-chart v-bind:resq="provincePieData"></pie-chart>
-        </el-row>
-        <el-row>
-          <piechart_foreign v-bind:resq="countryPieData"></piechart_foreign>
-        </el-row>
+
+
       </el-main>
 
   </el-container>
@@ -61,5 +67,16 @@ export default {
 }
 </script>
 <style>
+.mainbox{
 
+}
+.leftbox{
+  width: 300px
+}
+.middlebox{
+  width: 600px
+}
+.rightbox{
+  width: 300px
+}
 </style>
