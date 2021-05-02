@@ -7,12 +7,14 @@
         @select="handleSelect"
         background-color="#545c64"
         text-color="#fff"
-        active-text-color="#ffd04b">
+        active-text-color="#ffd04b" >
       <el-menu-item index="/" @click="jumpto('/')">主页</el-menu-item>
       <el-menu-item index="/News" @click="jumpto('/News')">新闻</el-menu-item>
       <el-menu-item index="/QNA" @click="jumpto('/QNA')">问答</el-menu-item>
       <el-menu-item index="/SelfService" @click="jumpto('/SelfService')">自诊</el-menu-item>
 
+      <img src="../imgs/logo-text.png" height="20%" width="20%" style="float: right"/>
+<!--      <img src="../imgs/logo.png" height="5%" width="5%" style="float: right; margin: inherit"/>-->
     </el-menu>
   </div>
 </template>
