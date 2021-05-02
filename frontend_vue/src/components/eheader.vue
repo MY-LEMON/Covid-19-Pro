@@ -13,7 +13,7 @@
       <el-menu-item index="/QNA" @click="jumpto('/QNA')">问答</el-menu-item>
       <el-menu-item index="/SelfService" @click="jumpto('/SelfService')">自诊</el-menu-item>
       <a href="#/">
-      <img src="../imgs/logo-text.png" height="20%" width="20%" style="float: right"/>
+      <img src="../imgs/logo-text.png" height="15%" width="15%" style="float: right"/>
 <!--      <img src="../imgs/logo.png" height="5%" width="5%" style="float: right; margin: inherit"/>-->
       </a>
     </el-menu>
