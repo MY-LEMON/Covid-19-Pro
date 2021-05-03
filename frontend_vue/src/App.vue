@@ -1,8 +1,8 @@
 <template>
   <div id="app">
-    <eheader></eheader>
+    <eheader style="height: 60px"></eheader>
 <!--    <Kgraph></Kgraph>-->
-    <router-view></router-view>
+    <router-view style="height: 660px ;background: #f6f6f6"></router-view>
   </div>
 </template>
 
