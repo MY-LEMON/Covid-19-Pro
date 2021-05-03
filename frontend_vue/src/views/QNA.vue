@@ -7,11 +7,18 @@
         <el-button @click="submit" slot="append" icon="el-icon-search"></el-button>
       </el-input>
     </el-header>
-    <el-container v-if="isloaded">
+    <el-container v-if="isLoaded">
 
-      <el-aside width="30%">{{textdata}}</el-aside>
-      <el-main><Kgraph  v-bind:graph_json_data="graphdata" ></Kgraph></el-main>
+      <el-aside width="30%" v-if="isSearched">{{textdata}}</el-aside>
+      <el-main v-if="isSearched"><Kgraph  v-bind:graph_json_data="graphdata" ></Kgraph></el-main>
+
+      <div v-if="!isSearched">
+        <h3>未搜索到结果</h3>
+      </div>
     </el-container>
+      <el-container v-if="this.isloaded == true">
+
+      </el-container>
     </el-container>
 
 
@@ -37,13 +44,20 @@ export default {
   data(){
     return{
       input:'',
-      isloaded: false
+      isLoaded: false,
+      resMsg:""
+    }
+  },
+  computed:{
+    isSearched(){
+      return this.resMsg=="搜索结果"
     }
   },
 beforeMount() {
     console.log("QNA page mounting")
 
 },
+
   mounted() {
     console.log("QNA page mounted")
   },
@@ -52,16 +66,19 @@ beforeMount() {
   },
   methods: {
     submit(){
-      this.isloaded = false
-      axios.get("https://b2f65068-d22f-4c9e-81c6-2faa7d5cb2bd.mock.pstmn.io/qna",{
+      this.isLoaded = false
+      axios.get("http://172.22.69.121:5000/search",{
         params:{
           "key":this.input
         }
       }).then(resp=>{
         console.log("loading data")
+        console.log(resp.data)
         this.graphdata = resp.data.data[1]
         this.textdata = resp.data.data[0]
-        this.isloaded = true
+        this.resMsg = resp.data.message
+        this.isLoaded = true
+
       })
     }
   }

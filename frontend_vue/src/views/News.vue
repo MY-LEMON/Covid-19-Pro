@@ -4,7 +4,7 @@
         class="list"
         v-infinite-scroll="load"
         infinite-scroll-disabled="disabled"
-        style="overflow: auto; height: 500px">
+        style="overflow: auto; height: 600px">
 
       <el-row v-for="i in data" :key="i.id" class="list-item">
 
@@ -50,7 +50,7 @@ export default {
   },
   computed: {
     noMore () {
-      return this.count >= 10
+      return false
     },
     disabled () {
       return this.loading || this.noMore

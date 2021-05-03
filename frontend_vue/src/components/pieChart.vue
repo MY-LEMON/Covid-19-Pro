@@ -65,7 +65,7 @@ export default {
               name:'辽宁省',
               value: []
             },{
-              name:'内蒙古',
+              name:'内蒙古自治区',
               value: []
             },{
               name:'新疆维吾尔自治区',
@@ -128,7 +128,7 @@ export default {
               name:'广东省',
               value: []
             },{
-              name:'广西省',
+              name:'广西壮族自治区',
               value: []
             },{
               name:'浙江省',
@@ -172,9 +172,13 @@ export default {
       this.chart.setOption(this.options)
     },
     getData(resq) {
+      console.log(resq)
       for (var i = 0; i < 34; i++)
       {
         this.options.series[0].data[i].value = resq[Province[i]]
+        // console.log(resq[Province[i]])
+        // console.log(this.options.series[0].data[i].value)
+        // console.log("**************")
       }
     }
   }
