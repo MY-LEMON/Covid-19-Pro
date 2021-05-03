@@ -54,12 +54,13 @@ export default {
   methods:{
     submit(){
       this.checkList.push(this.radio)
-      axios.get("/selfservice",{
+      axios.get("http://172.22.69.121:5000/selfservice",{
       params :{
         "self_test":this.checkList.toString()
       }
       }).then(ans=>{
-        alert(ans)
+        console.log(ans)
+        alert(ans.data.result1)
       })
     }
   }
