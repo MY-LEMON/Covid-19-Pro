@@ -5,13 +5,30 @@
         class="el-menu-demo"
         mode="horizontal"
         @select="handleSelect"
-        background-color="#545c64"
-        text-color="#fff"
-        active-text-color="#ffd04b" >
-      <el-menu-item index="/" @click="jumpto('/')">主页</el-menu-item>
-      <el-menu-item index="/News" @click="jumpto('/News')">新闻</el-menu-item>
-      <el-menu-item index="/QNA" @click="jumpto('/QNA')">问答</el-menu-item>
-      <el-menu-item index="/SelfService" @click="jumpto('/SelfService')">自诊</el-menu-item>
+        background-color="#ffffff"
+        text-color="#878fa4"
+
+        active-text-color="#2a64f5" >
+      <el-menu-item index="/" @click="jumpto('/')">
+        <h2 :class="this.$parent.$route.path==='/' ? 'selected': 'unselected'">
+          主页
+        </h2>
+      </el-menu-item>
+      <el-menu-item index="/News" @click="jumpto('/News')">
+        <h2 :class="this.$parent.$route.path==='/News' ? 'selected': 'unselected'">
+          新闻
+        </h2>
+      </el-menu-item>
+      <el-menu-item index="/QNA" @click="jumpto('/QNA')">
+        <h2 :class="this.$parent.$route.path==='/QNA' ? 'selected': 'unselected'">
+          问答
+        </h2>
+      </el-menu-item>
+      <el-menu-item index="/SelfService" @click="jumpto('/SelfService')">
+        <h2 :class="this.$parent.$route.path==='/SelfService' ? 'selected': 'unselected'">
+          自诊
+        </h2>
+      </el-menu-item>
       <a href="#/">
       <img src="../imgs/logo-text.png" height="15%" width="15%" style="float: right"/>
 <!--      <img src="../imgs/logo.png" height="5%" width="5%" style="float: right; margin: inherit"/>-->
@@ -41,6 +58,14 @@ export default {
 }
 </script>
 
-<style scoped>
-
+<style>
+.el-menu-item>h2{
+  margin: 0
+}
+.selected{
+  font-weight: bold;
+}
+.unselected{
+  font-weight: lighter;
+}
 </style>
