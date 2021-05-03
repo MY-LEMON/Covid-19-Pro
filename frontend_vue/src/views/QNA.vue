@@ -1,24 +1,24 @@
 <template>
 
-    <el-container>
-    <el-header>
-      <el-input placeholder="请输入问题" v-model="input" onfocus="select">
+    <el-container v-loading="loading">
+      <el-header>
+      <el-input placeholder="请输入问题" v-model="input" :class="isLoaded?'b2t':'t2b'" style="width: 60%" >
 
         <el-button @click="submit" slot="append" icon="el-icon-search"></el-button>
       </el-input>
-    </el-header>
+      </el-header>
     <el-container v-if="isLoaded">
 
       <el-aside width="30%" v-if="isSearched">{{textdata}}</el-aside>
-      <el-main v-if="isSearched"><Kgraph  v-bind:graph_json_data="graphdata" ></Kgraph></el-main>
+        <el-main v-if="isSearched">
+          <Kgraph  v-bind:graph_json_data="graphdata" ></Kgraph>
+        </el-main>
 
       <div v-if="!isSearched">
         <h3>未搜索到结果</h3>
       </div>
     </el-container>
-      <el-container v-if="this.isloaded == true">
 
-      </el-container>
     </el-container>
 
 
@@ -43,9 +43,18 @@ export default {
   },
   data(){
     return{
+      loading: false,
       input:'',
       isLoaded: false,
-      resMsg:""
+      resMsg:"",
+      // teststyle0:{
+      //
+      // },
+      // teststyle1:{
+      //   width: '60%' ,
+      //   top:'30%' ,
+      //   left: '20%'
+      // }
     }
   },
   computed:{
@@ -66,8 +75,9 @@ beforeMount() {
   },
   methods: {
     submit(){
+      this.loading=true
       this.isLoaded = false
-      axios.get("http://172.22.69.121:5000/search",{
+      axios.get("https://b2f65068-d22f-4c9e-81c6-2faa7d5cb2bd.mock.pstmn.io/qna",{
         params:{
           "key":this.input
         }
@@ -78,6 +88,7 @@ beforeMount() {
         this.textdata = resp.data.data[0]
         this.resMsg = resp.data.message
         this.isLoaded = true
+        this.loading = false
 
       })
     }
@@ -93,5 +104,33 @@ beforeMount() {
 }
 .right {
   margin-left: 200px;
+}
+.t2b{
+  animation: start1 1s cubic-bezier(.7,0,.3,1);
+  animation-fill-mode:forwards;
+  /*margin-top: 100px;*/
+}
+.b2t{
+  animation: end1 1s cubic-bezier(.7,0,.3,1);
+  animation-fill-mode:forwards;
+}
+@keyframes start1 {
+  0%{
+    transform: translateY(0px);
+    /*top:0px*/
+  }
+
+  100%{
+    transform: translateY(200px);
+    /*top: 100px*/
+  }
+}
+@keyframes end1 {
+  from{
+    transform: translateY(200px);
+  }
+  to{
+    transform: translateY(0px);
+  }
 }
 </style>
