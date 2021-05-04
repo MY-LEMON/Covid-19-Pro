@@ -1,24 +1,55 @@
 <template>
 
-    <el-container v-loading="loading">
-      <el-header>
-      <el-input placeholder="请输入问题" v-model="input" :class="isLoaded?'b2t':'t2b'" style="width: 60%" >
+    <el-container v-loading="loading" style="height: 100%; ">
+      <el-header style="height: 10%">
+        <el-input placeholder="请输入疫情相关问题" v-model="input" :class="isLoaded?'b2t':'t2b'" style="width: 80%;top: 15px" >
 
-        <el-button @click="submit" slot="append" icon="el-icon-search"></el-button>
-      </el-input>
+          <el-button @click="submit" slot="append" icon="el-icon-search"></el-button>
+        </el-input>
       </el-header>
-    <el-container v-if="isLoaded">
+<!--    <el-container v-if="isLoaded">-->
 
-      <el-aside width="30%" v-if="isSearched">{{textdata}}</el-aside>
-        <el-main v-if="isSearched">
-          <Kgraph  v-bind:graph_json_data="graphdata" ></Kgraph>
-        </el-main>
+<!--      <el-aside width="30%" v-if="isSearched">-->
+<!--        <el-card>-->
+<!--        {{textdata}}-->
+<!--        </el-card>-->
+<!--      </el-aside>-->
+<!--        <el-main v-if="isSearched">-->
+<!--          <el-card>-->
+<!--          <Kgraph  v-bind:graph_json_data="graphdata" ></Kgraph>-->
+<!--          </el-card>-->
+<!--        </el-main>-->
 
-      <div v-if="!isSearched">
-        <h3>未搜索到结果</h3>
-      </div>
-    </el-container>
+<!--      <div v-if="!isSearched">-->
+<!--        <h3>未搜索到结果</h3>-->
+<!--      </div>-->
+<!--    </el-container>-->
+      <div v-if="!isLoaded">
 
+        <img src="../imgs/QNAimg.png" /></div>
+    <div v-if="isLoaded" style="height: 90%">
+      <el-row v-if="isSearched" :gutter="10" style="height: 100%">
+        <el-col :span="6" style="height: 100%">
+          <el-card :class="isLoaded?'b2t':'t2b'" style="height: 98%;width: 100%; overflow-y: auto" >
+            <p>
+              {{textdata}}
+            </p>
+
+          </el-card>
+
+        </el-col>
+        <el-col :span="18" style="height: 100%">
+          <el-card :class="isLoaded?'b2t':'t2b'" style=" width: 100%; height: 98%">
+            <Kgraph  v-bind:graph_json_data="graphdata" ></Kgraph>
+          </el-card>
+        </el-col>
+      </el-row>
+      <el-row v-if="!isSearched" style="height: 100%">
+        <el-card>
+          <h3>未搜索到结果</h3>
+        </el-card>
+      </el-row>
+    </div>
     </el-container>
 
 
@@ -32,17 +63,19 @@ import axios from "axios";
 export default {
   name: 'QNA',
   props:{
-    graphdata:{
-      type: Object,
-      require: true
-    },
-    textdata:{
-      type: Object,
-      require: true
-    }
+    // graphdata:{
+    //   type: Object,
+    //   require: true
+    // },
+    // textdata:{
+    //   type: Object,
+    //   require: true
+    // }
   },
   data(){
     return{
+      graphdata:{},
+      textdata:{},
       loading: false,
       input:'',
       isLoaded: false,
