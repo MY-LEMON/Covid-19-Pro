@@ -44,4 +44,5 @@ export default {
     this.webHeight = document.documentElement.clientHeight;
   }
 }
+
 </script>
