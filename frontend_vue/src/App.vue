@@ -1,8 +1,8 @@
 <template>
-  <div id="app">
-    <eheader style="height: 60px"></eheader>
+  <div id="app" :style="'height:'+this.webHeight*0.95+'px;witdh:'+this.webWidth+'px'">
+    <eheader style="height: 8%"></eheader>
 <!--    <Kgraph></Kgraph>-->
-    <router-view style="height: 660px ;background: #f6f6f6"></router-view>
+    <router-view style="height: 90%; width: 100% ;background: #f6f6f6"></router-view>
   </div>
 </template>
 
@@ -32,6 +32,16 @@
 import Eheader from './components/eheader'
 // import Kgraph from "./components/kgraph";
 export default {
-  components: { Eheader }
+  components: { Eheader },
+  data(){
+    return{
+      webWidth:600,
+      webHeight:900
+    }
+  },
+  mounted() {
+    this.webWidth=document.documentElement.clientWidth;
+    this.webHeight = document.documentElement.clientHeight;
+  }
 }
 </script>
