@@ -1,27 +1,27 @@
 <template>
-  <el-container>
+  <el-container style="height: 100%">
 
-      <el-main v-if="this.mapisloaded">
+      <el-main v-if="this.mapisloaded" style="height: 100%">
         <el-row class="mainbox">
           <el-col :span="6" class="leftbox">
-            <el-row>
-              <pie-chart v-bind:resq="provincePieData" style="width: 100%;"></pie-chart>
+            <el-row style="height: 50%">
+              <pie-chart v-bind:resq="provincePieData" style="width: 100%; height: 100% ;margin-left: 10px"></pie-chart>
             </el-row>
-            <el-row>
-              <rank v-bind:resq="rankData" style="width: 100%;"></rank>
+            <el-row style="height: 50%">
+              <rank v-bind:resq="rankData" style="width: 100%; height: 100% ;margin-left: 10px"></rank>
             </el-row>
           </el-col>
           <el-col :span="12" class="middlebox">
 
-            <map-china v-bind:china="chinadata" v-bind:province="provincedata" style="width: 100%;"></map-china>
+            <map-china v-bind:china="chinadata" v-bind:province="provincedata" style="width: 100%; height: 100%"></map-china>
 
           </el-col>
-          <el-col :span="6" class="rightbox" >
-            <el-row>
-              <piechart_foreign v-bind:resq="countryPieData" style="width: 100%;"></piechart_foreign>
+          <el-col :span="6" class="rightbox">
+            <el-row style="height: 50%">
+              <piechart_foreign v-bind:resq="countryPieData" style="width: 100%; height: 100% ;margin-left: 10px"></piechart_foreign>
             </el-row>
-            <el-row>
-              <rank_foreign v-bind:resq="rankForeignData" style="width: 100%;"></rank_foreign>
+            <el-row style="height: 50%">
+              <rank_foreign v-bind:resq="rankForeignData" style="width: 100%; height: 100% ;margin-left: 10px"></rank_foreign>
             </el-row>
           </el-col>
         </el-row>
@@ -82,15 +82,19 @@ export default {
 </script>
 <style>
 .mainbox{
-
+  width: 100%;
+  height: 100%;
 }
 .leftbox{
-  width: 300px
+  width: 25%;
+  height: 100%;
 }
 .middlebox{
-  width: 600px
+  width: 50%;
+  height: 100%;
 }
 .rightbox{
-  width: 300px
+  width: 25%;
+  height: 100%;
 }
 </style>
