@@ -1,28 +1,28 @@
 <template>
-  <div class="infinite-list-wrapper" style="overflow: auto; height: auto;">
+  <div class="infinite-list-wrapper" style="overflow: auto; height: 100%;">
     <div
         class="list"
         v-infinite-scroll="load"
         infinite-scroll-disabled="disabled"
-        style="overflow: auto; height: 600px">
+        style="overflow: auto; height: 90%">
 
-      <el-row v-for="i in data" :key="i.id" class="list-item">
-
-
-        <el-col :span="12" :offset="4">
-          <el-link :href="i.src" >
+      <el-row v-for="i in data" :key="i.id" class="list-item" type="flex" justify="center">
+        <el-card>
+          <el-col :span="12" :offset="4">
+            <el-link :href="i.src" >
               <p>{{i.abstract}}</p>
-          </el-link>
-        </el-col>
-        <el-col :span="4" >
-          <div >
-            <el-image
-              style=" height: 100px"
-              :src=i.imgs[0]
-              fit= contain
+            </el-link>
+          </el-col>
+          <el-col :span="4" >
+            <div >
+              <el-image
+                  style=" height: 100px"
+                  :src=i.imgs[0]
+                  fit= contain
               ></el-image>
-          </div>
-        </el-col>
+            </div>
+          </el-col>
+        </el-card>
 
       </el-row>
 
@@ -111,5 +111,8 @@ export default {
 .row-bg {
   padding: 10px 0;
   background-color: #f9fafc;
+}
+.el-card{
+  width: 60%;
 }
 </style>
