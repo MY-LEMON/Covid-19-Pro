@@ -118,7 +118,7 @@ class CovidGraph:
                     entities[-1])]
         if intent == "query_hospital" and label == "infectorname_graph":
             sql = [
-                "match (n:`病例`)-[r:`就诊`]-(p:`医院`) where n.`label_zh`='{0}' return return id(n),"
+                "match (n:`病例`)-[r:`就诊`]-(p:`医院`) where n.`label_zh`='{0}' return id(n),"
                 "properties(n),properties(r),id(p),properties(p)".format(
                     entities[-1])]
 
@@ -296,7 +296,11 @@ class CovidGraph:
         return final_answer
 
     def data2json(self, resp):
-
+        """
+        查询数据转为前端可以构建的图谱数据
+        :param resp:
+        :return {'rootId': str(rootID), 'nodes': nodes, 'links': links}
+        """
         rootID = resp[0]['id(n)']
         nodes = []
         links = []

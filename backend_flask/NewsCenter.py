@@ -72,7 +72,7 @@ class News(object):
 
 if __name__ == "__main__":
     news = News()
-    # print(news.insert_news()) # 每日新闻爬取，创建好html后需运行一次
+    print(news.insert_news()) # 每日新闻爬取，创建好html后需运行一次
     from_key = 280
     to_key = 290
     total = to_key - from_key
