@@ -57,7 +57,7 @@ export default {
   },
   methods: {
     getdata(){
-      axios.get('http://172.22.69.121:5000/news',{
+      axios.get('http://127.0.0.1:5000/news',{
         params:{
           "from":this.count,
           "to":this.count+this.num

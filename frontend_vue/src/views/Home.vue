@@ -65,7 +65,7 @@ export default {
   },
   mounted() {
     this.mapisloaded = false
-  axios.get("http://172.22.69.121:5000/").then(resp=>{
+  axios.get("http://127.0.0.1:5000/").then(resp=>{
     this.chinadata = resp.data.data["China"]
     this.provincedata = resp.data.data["Provinces"]
     this.provincePieData = resp.data.data["pie_province"]

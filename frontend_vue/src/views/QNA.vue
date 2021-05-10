@@ -30,7 +30,7 @@
     <div v-if="isLoaded" style="height: 90%">
       <el-row v-if="isSearched" :gutter="10" style="height: 100%">
         <el-col :span="6" style="height: 100%">
-          <el-card :class="isLoaded?'b2t':'t2b'" style="height: 98%;width: 100%; overflow-y: auto" >
+          <el-card :class="isLoaded?'b2t':'t2b'" style="height: 98%;width: 100%; overflow-y: auto;font-size: 22px" >
             <p>
               {{textdata}}
             </p>
@@ -110,7 +110,7 @@ beforeMount() {
     submit(){
       this.loading=true
       this.isLoaded = false
-      axios.get("http://172.22.69.121:5000/search",{
+      axios.get("http://127.0.0.1:5000/search",{
         params:{
           "key":this.input
         }

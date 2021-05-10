@@ -184,7 +184,7 @@ export default {
       if(this.radio!=0){
         this.checkList.push(this.radio)
       }
-      axios.get("http://172.22.69.121:5000/selfservice",{
+      axios.get("http://127.0.0.1:5000/selfservice",{
       params :{
         "self_test":this.checkList.toString()
       }

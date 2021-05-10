@@ -10,31 +10,33 @@ import requests
 import re
 import time
 
+jieba.load_userdict("dict.txt")
 
+# 广州市卫健委新闻爬虫
 class GetNews:
     def __init__(self):
         self.url = "http://wjw.gz.gov.cn/ztzl/xxfyyqfk/yqtb/"  # 原网址
-        self.pages = 20  # 页数，等待动态返回
-        self.url_all = [self.url]+[self.url+"index_" +
-                                   str(i)+".html" for i in range(2, self.pages+1)]  # 目录网址
+        self.pages = 20  # todo 网站页数，等待动态返回
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36 Edg/89.0.774.50'}
         self.encoding = 'utf-8'
-        self.res = [requests.get(i, headers=self.headers)
-                    for i in self.url_all]  # request
-        self.soup = [BeautifulSoup(i.text) for i in self.res]  # soup处理
+
         self.news_url_all = []
         self.news_dict_all = []
 
-    def __getInfo__(self):
-        pass
+    def get_web(self):
+        self.url_all = [self.url] + [self.url + "index_" +
+                                     str(i) + ".html" for i in range(2, self.pages + 1)]  # 目录网址
+        self.res = [requests.get(i, headers=self.headers)
+                    for i in self.url_all]  # request
+        self.soup = [BeautifulSoup(i.text) for i in self.res]  # soup处理
 
-    def __main__(self):
-        pass
-
-    # 获取每天url
     def get_url(self):
-        for soups in range(0, self.pages-1):
+        '''
+        获取每天url
+        :return:
+        '''
+        for soups in range(0, self.pages - 1):
             news_a = self.soup[soups].find_all('a')
             news_all_href = []
             for i in news_a:
@@ -44,10 +46,13 @@ class GetNews:
             self.news_url_all.extend(news_all_href)
         return self.news_url_all
 
-    # 获取每天url的新闻
-    def get_text(self, news_url_all):
-
-        for url in news_url_all:
+    def get_text(self):
+        '''
+        获取每天url的新闻
+        :param news_url_all: 全部新闻网址
+        :return: news_dict_all：{}
+        '''
+        for url in self.news_url_all:
             soup_news = BeautifulSoup(
                 requests.get(url, headers=self.headers).text)
             news_text = []
@@ -64,6 +69,16 @@ class GetNews:
             self.news_dict_all.append(news_text_dict)
 
         return self.news_dict_all
+
+    def dump_json(self):
+        with open("news_dict_all_data.json", "w") as dump_f:
+            json.dump(self.news_dict_all, dump_f)
+
+    def load_json(self):
+        with open("news_dict_all_data.json", 'r') as load_f:
+            self.news_dict_all = json.load(load_f)
+        return self.news_dict_all
+
 
 class infectors:
     def __init__(self, sentense):
@@ -83,10 +98,13 @@ class infectors:
         self.to_place = '空'
         self.hospital = '空'
         self.chemeth = '空'
-# 数据正则化
 
-    def build_basic(self, sentense):
-
+    def crawler_basic(self, sentense):
+        '''
+        基础数据正则化
+        :param sentense:
+        :return:
+        '''
         try:
             re1 = re.findall(
                 # r'新增\d*例*(.+?)情*况*\d*[：:](.)，(\d+(?=岁))岁，籍*贯*(.+?)[，。](.*)', sentense)[0]
@@ -108,28 +126,34 @@ class infectors:
         else:
             self.else_info = re1[4]
 
-    def build_extra(self, sentense):
-
+    def crawler_extra(self, sentense):
+        '''
+        额外数据正则化
+        :return:
+        '''
         re3 = re.search('前往|先后乘坐|先后搭乘|搭乘', self.else_info)
         re4 = []
         if re3:
             if re3.group() == "前往":
                 try:
                     re4 = re.findall(
-                        r'.+?前往.+[，,](.+?日)从?(.*)乘坐(.+航班)于?(.+?)飞*抵+达*(.+?)入*境*，.+转(.+?)隔离治疗[，。](.*)', self.else_info)[0]
+                        r'.+?前往.+[，,](.+?日)从?(.*)乘坐(.+航班)于?(.+?)飞*抵+达*(.+?)入*境*，.+转(.+?)隔离治疗[，。](.*)', self.else_info)[
+                        0]
 
                 except IndexError:
                     re4 = ['空', '空', '空', '空', '空', '空', '空']
             elif re3.group() == "先后乘坐":
                 try:
                     re4 = re.findall(
-                        r'(.+?)[从于](.+?)出发[，,]先后乘坐(.+(?=航班)航班)于(.+?)飞抵(.+?)入*境*，.+转(.+?)隔离治疗[，。](.*)', self.else_info)[0]
+                        r'(.+?)[从于](.+?)出发[，,]先后乘坐(.+(?=航班)航班)于(.+?)飞抵(.+?)入*境*，.+转(.+?)隔离治疗[，。](.*)', self.else_info)[
+                        0]
                 except IndexError:
                     re4 = ['空', '空', '空', '空', '空', '空', '空']
             elif re3.group() == "先后搭乘":
                 try:
                     re4 = re.findall(
-                        r'(.+?)[从于](.+?)出发[，,]先后(?:搭乘)?(?:乘坐)?(.+(?=航班)航班)于(.+?)飞抵(.+?)入*境*，.+转(.+?)隔离治疗[，。](.*)', self.else_info)[0]
+                        r'(.+?)[从于](.+?)出发[，,]先后(?:搭乘)?(?:乘坐)?(.+(?=航班)航班)于(.+?)飞抵(.+?)入*境*，.+转(.+?)隔离治疗[，。](.*)',
+                        self.else_info)[0]
                 except IndexError:
                     re4 = ['空', '空', '空', '空', '空', '空', '空']
             elif re3.group() == "搭乘":
@@ -172,86 +196,86 @@ class infectors:
         self.out_date = self.out_date.replace('月', '-')
         self.out_date = self.out_date.replace('日', '')
 
-        matchOutTime = re.search(r'(\d+)-(\d+)', self.out_date)
-
+    def recrawler(self):
         # 处理out_date
-        if(re.fullmatch(r'\d+-\d+', self.out_date)):
-            mouthNum = int(matchOutTime.group(1))
-            dayNum = int(matchOutTime.group(2))
+        match_out_time = re.search(r'(\d+)-(\d+)', self.out_date)
+        if re.fullmatch(r'\d+-\d+', self.out_date):
+            mouthNum = int(match_out_time.group(1))
+            dayNum = int(match_out_time.group(2))
             matchRes = re.search(r'(\d+)-(\d+-\d+)', self.date)
-            # print(matchRes.group(2))
             timeNow = time.strptime(matchRes.group(2), "%m-%d")
-            timeOut = time.strptime(str(mouthNum)+'-'+str(dayNum), "%m-%d")
+            timeOut = time.strptime(str(mouthNum) + '-' + str(dayNum), "%m-%d")
             if timeOut > timeNow:
                 yearNum = int(matchRes.group(1)) - 1
-                self.out_date = str(yearNum)+'-' + self.out_date
+                self.out_date = str(yearNum) + '-' + self.out_date
             else:
-                self.out_date = matchRes.group(1)+'-' + self.out_date
+                self.out_date = matchRes.group(1) + '-' + self.out_date
 
-            matchIndate = re.search(r'(\d+)日',self.in_date)
+            matchIndate = re.search(r'(\d+)日', self.in_date)
             if matchIndate:
-                matchRes = re.search(r'(\d+-\d+-)\d+',self.out_date)
+                matchRes = re.search(r'(\d+-\d+-)\d+', self.out_date)
                 self.in_date = matchRes.group(1) + matchIndate.group(1)
-
-
-    def rebuild(self):
         if self.in_date == '当天' or self.in_date == "当日":
             self.in_date = self.out_date
 
 
-with open("data.json", 'r') as load_f:
-    news_dict_all = json.load(load_f)
+class infectorData:
 
-jieba.load_userdict("dict.txt")
+    def __init__(self):
+        self.infectors_list = []
+        self.infectors_len = 300
 
-infectors_list = []  # 感染者列表
+    def data_parser(self):
+        for day in range(0, 300):
+            for sentense in iter(list(news_dict_all[day].values())[0]):
+                words = pseg.cut(sentense)
+                words = [i for i in words]  # 迭代器转列表
+                for i in range(len(words)):
+                    if words[i].word == '男' or words[i].word == '女':  # 判断为感染者
 
-for day in range(0, 301):
+                        infector = infectors(sentense)
+                        strdate = str(list(news_dict_all[day].keys()))
+                        matchObj = re.search(r'(([\d]+年)?[\d]+月[\d]+日)', strdate)
+                        fulldate = matchObj.group(1)
+                        yearstr = matchObj.group(2)
+                        if yearstr == None:
+                            fulldate = '2020年' + fulldate
+                        fulldate = fulldate.replace('年', '-')
+                        fulldate = fulldate.replace('月', '-')
+                        fulldate = fulldate.replace('日', '')
 
-    for sentense in iter(list(news_dict_all[day].values())[0]):
-        #     print(sentense)
-        words = pseg.cut(sentense)
-        words = [i for i in words]  # 迭代器转列表
-        for i in range(len(words)):
-            if words[i].word == '男' or words[i].word == '女':  # 判断为感染者
-                # print(sentense)
-                infector = infectors(sentense)
-                strdate = str(list(news_dict_all[day].keys()))
-                matchObj = re.search(r'(([\d]+年)?[\d]+月[\d]+日)', strdate)
-                fulldate = matchObj.group(1)
-                yearstr = matchObj.group(2)
-                if yearstr == None:
-                    fulldate = '2020年'+fulldate
-                fulldate = fulldate.replace('年', '-')
-                fulldate = fulldate.replace('月', '-')
-                fulldate = fulldate.replace('日', '')
+                        infector.date = fulldate
+                        infector.crawler_basic(sentense)
+                        infector.crawler_extra(sentense)
+                        self.infectors_list.append(infector)
+                    if words[i].word == '相同':
+                        words_info = words[i + 2:]
+                        else_info = ''.join(
+                            [words_info[k].word for k in range(len(words_info))])
 
-                # infector.date = ''.join(list(news_dict_all[day].keys()))[5:-11]
-                infector.date = fulldate
-                infector.build_basic(sentense)
-                infector.build_extra(sentense)
-                infectors_list.append(infector)
-            if words[i].word == '相同':
-                words_info = words[i+2:]
-                else_info = ''.join(
-                    [words_info[k].word for k in range(len(words_info))])
-                # print(len(infectors_list)-1,0)
-                for i in range(len(infectors_list)-1, -1, -1):
-                    if infectors_list[i].else_info == '':
-                        infectors_list[i].else_info = else_info
-                        infectors_list[i].build_extra(sentense)
-                    else:
-                        break
+                        for i in range(len(self.infectors_list) - 1, -1, -1):
+                            if self.infectors_list[i].else_info == '':
+                                self.infectors_list[i].else_info = else_info
+                                self.infectors_list[i].crawler_extra(sentense)
+                            else:
+                                break
+            for infector in iter(self.infectors_list):
+                infector.recrawler()
 
-    for infector in iter(infectors_list):
-        infector.rebuild()
-        # print(infector.__dict__)
 
-with open("test.csv", "w", newline='') as csvfile:
-    writer = csv.writer(csvfile)
-    writer.writerow(list(infectors_list[0].__dict__.keys()))
-    for infector in iter(infectors_list):
-        writer.writerow(list(infector.__dict__.values()))
+if __name__ == '__main__':
+    flag = input("是否重新爬取数据？  1.是  2.否")
+    if flag == '1':
+        news = GetNews()  # 类实例化
+        news.get_web()
+        news_url_all = news.get_url()
+        news_dict_all = news.get_text()
+        news.dump_json()
+    elif flag == '2':
+        news = GetNews()  # 类实例化
+        news_dict_all = news.load_json()
 
-df = pd.read_csv('test.csv', parse_dates=[
-                 'date', 'in_date', 'out_date'], encoding='gbk')
+    infector_data = infectorData()
+    infector_data.data_parser()
+    for infector in iter(infector_data.infectors_list):
+        print(list(infector.__dict__.values()))
