@@ -195,7 +195,8 @@ export default {
           message:'<p style="line-height: 17px">'+ans.data.result1+'</p>',
           duration:8000,
           showClose:true,
-          offset:120
+          offset:120,
+          type: 'warning'
         })
       })
     }

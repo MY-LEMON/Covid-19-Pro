@@ -43,8 +43,8 @@
             <Kgraph  v-bind:graph_json_data="graphdata" ></Kgraph>
           </el-card>
         </el-col>
-      </el-row>
-      <el-row v-if="!isSearched" style="height: 100%">
+      </el-row >
+      <el-row v-if="!isSearched" style="height: 100%" type="flex" justify="center" :class="isLoaded?'b2t':'t2b'">
         <el-card>
           <h3>未搜索到结果</h3>
         </el-card>
@@ -77,7 +77,7 @@ export default {
       graphdata:{},
       textdata:{},
       loading: false,
-      input:'',
+      input:"",
       isLoaded: false,
       resMsg:"",
       // teststyle0:{
@@ -110,7 +110,7 @@ beforeMount() {
     submit(){
       this.loading=true
       this.isLoaded = false
-      axios.get("https://b2f65068-d22f-4c9e-81c6-2faa7d5cb2bd.mock.pstmn.io/qna",{
+      axios.get("http://172.22.69.121:5000/search",{
         params:{
           "key":this.input
         }

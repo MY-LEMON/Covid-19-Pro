@@ -41,7 +41,6 @@ import axios from "axios";
 export default {
   data () {
     return {
-
       count: 0,
       num:5,
       loading: false,
