@@ -140,7 +140,7 @@ class EntityExtractor:
     def simCal(self, word, entities, flag):
         """
         计算词语和字典中的词的相似度
-        相同字符的个数/min(|A|,|B|)   +  余弦相似度
+        相同字符的个数/min(|A|,|B|) + 余弦相似度
         :param word: str
         :param entities:List
         :return:
@@ -211,6 +211,11 @@ class EntityExtractor:
             self.result[temp1[0][2]] = [temp1[0][0]]
 
     def entity_reg(self, question):
+        '''
+        通过查询AC树，判别实体
+        :param question:
+        :return:
+        '''
 
         ac_tree = [self.disease_tree, self.alias_tree, self.symptom_tree, self.complication_tree,
                    self.infectorname_tree, self.place_tree, self.date_tree, self.transport_tree, self.hospital_tree,
@@ -310,6 +315,11 @@ class EntityExtractor:
         return False
 
     def extractor(self, question):
+        """
+        识别实体、预测意图主函数
+        :param question:
+        :return:
+        """
         self.entity_reg(question)
         # if not self.result:
         #     self.find_sim_words(question)

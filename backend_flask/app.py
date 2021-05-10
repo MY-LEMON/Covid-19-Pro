@@ -75,17 +75,16 @@ def covid_data():
         return jsonify(resData)
 
 
-@app.route("/submit", methods=["GET", "POST"])
-def submit():  # 获取自检数据及提交
+@app.route("/selfservice", methods=["GET", "POST"])
+def selfservice():  # 获取自检数据及提交
     # 由于POST、GET获取数据的方式不同，需要使用if语句进行判断
+    self_test = ''
     if request.method == "POST":
-        self_test = request.form.get("self_test", type=str)  # 一个数组？
+        self_test = request.form.get("self_test")  # 一个数组？
     elif request.method == "GET":
-        self_test = request.form.get("self_test", type=str)
-    print(self_test)
-    print(str(self_test))
-    self_test = str(self_test).strip().split(',')
-    print(self_test)
+        self_test = request.args.get("self_test")
+
+    self_test = self_test.split(',')
     self_test = [int(i) for i in self_test]
 
     result1 = judge(self_test)  # 根据结果显示相应内容
@@ -140,7 +139,7 @@ def news_view():
         to_key = int(request.values.get("to"))
         new = News()
         total = to_key - from_key
-        from_key = from_key % new.db_sum       # 如果新闻不够，则从头查询
+        from_key = from_key % new.db_sum  # 如果新闻不够，则从头查询
         to_key = from_key + total
         news_data = new.get_news_limit(from_key, to_key)
         resData = {

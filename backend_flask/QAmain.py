@@ -28,7 +28,6 @@ if __name__ == "__main__":
         if not question:
             break
         final_answer, node_relation = handler.qa_main(question)
-        print("ooo", final_answer, node_relation)
         resData = {
             "resCode": 0,  # 非0即错误 1
             "data": [final_answer[0], node_relation[0]],  # 数据位置，一般为数组
